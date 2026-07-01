@@ -9,14 +9,13 @@ import {
   Divider,
   Surface,
 } from 'react-native-paper';
-import StorageService from '../services/StorageService';
+import StorageService, { DEFAULT_SETTINGS } from '../services/StorageService';
 import FileService from '../services/FileService';
 import { UI_CONFIG } from '../constants';
 import { AppSettings } from '../types';
 import { useAppTheme } from '../theme/theme';
 import { useThemeContext } from '../providers/ThemeProvider';
 import { makeStyles } from '../utils/useStyles';
-import { palette } from '../theme/tokens';
 
 const BACKUP_FIELDS = [
   'words',
@@ -33,6 +32,25 @@ const showMessage = (title: string, message: string) => {
   }
 
   Alert.alert(title, message);
+};
+
+const showConfirm = (
+  title: string,
+  message: string,
+  onConfirm: () => void,
+  confirmText = '确认'
+) => {
+  if (Platform.OS === 'web') {
+    if (window.confirm(`${title}\n\n${message}`)) {
+      onConfirm();
+    }
+    return;
+  }
+
+  Alert.alert(title, message, [
+    { text: '取消', style: 'cancel' },
+    { text: confirmText, style: 'destructive', onPress: onConfirm },
+  ]);
 };
 
 const getBackupValidationError = (jsonData: string): string | null => {
@@ -60,16 +78,7 @@ export default function SettingsScreen() {
   const { colors } = useAppTheme();
   const { setThemeMode } = useThemeContext();
   const styles = useStyles();
-  const [settings, setSettings] = useState<AppSettings>({
-    dailyNewWords: 10,
-    reviewInterval: [1, 2, 4, 7, 15],
-    soundEnabled: true,
-    theme: 'light',
-    fontSize: 14,
-    autoPlaySound: false,
-    showRareSense: true,
-    showEtymology: true,
-  });
+  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
 
@@ -118,6 +127,9 @@ export default function SettingsScreen() {
           : '已打开系统分享面板，请选择保存位置并妥善保存 .bk 文件。'
       );
     } catch (error: any) {
+      if (error?.message === 'EXPORT_CANCELED') {
+        return;
+      }
       showMessage('导出失败', error.message || '无法导出备份文件');
     } finally {
       setIsExporting(false);
@@ -172,56 +184,26 @@ export default function SettingsScreen() {
   };
 
   const handleClearData = () => {
-    Alert.alert(
+    showConfirm(
       '确认清除',
       '确定要清除所有数据吗？此操作无法撤销。',
-      [
-        { text: '取消', style: 'cancel' },
-        {
-          text: '清除',
-          style: 'destructive',
-          onPress: async () => {
-            await StorageService.clearAllData();
-            setSettings({
-              dailyNewWords: 10,
-              reviewInterval: [1, 2, 4, 7, 15],
-              soundEnabled: true,
-              theme: 'light',
-              fontSize: 14,
-              autoPlaySound: false,
-              showRareSense: true,
-              showEtymology: true,
-            });
-            Alert.alert('已清除', '所有数据已清除');
-          }
-        }
-      ]
+      async () => {
+        await StorageService.clearAllData();
+        setSettings(DEFAULT_SETTINGS);
+        setThemeMode('light');
+        showMessage('已清除', '所有数据已清除');
+      },
+      '清除'
     );
   };
 
   const handleResetDefaults = () => {
-    Alert.alert(
-      '恢复默认',
-      '确定要恢复所有设置为默认值吗？',
-      [
-        { text: '取消', style: 'cancel' },
-        {
-          text: '确定',
-          onPress: () => {
-            saveSettings({
-              dailyNewWords: 10,
-              reviewInterval: [1, 2, 4, 7, 15],
-              soundEnabled: true,
-              theme: 'light',
-              fontSize: 14,
-              autoPlaySound: false,
-              showRareSense: true,
-              showEtymology: true,
-            });
-          }
-        }
-      ]
-    );
+    showConfirm('恢复默认', '确定要恢复所有设置为默认值吗？', async () => {
+      await StorageService.resetSettings();
+      setSettings(DEFAULT_SETTINGS);
+      setThemeMode('light');
+      showMessage('已恢复', '所有设置已恢复为默认值');
+    });
   };
 
   const handleAdjustDailyNewWords = (delta: number) => {
@@ -314,7 +296,7 @@ export default function SettingsScreen() {
             <Switch
               value={settings.soundEnabled}
               onValueChange={value => saveSettings({ soundEnabled: value })}
-              color={palette.primary}
+              color={colors.primary}
             />
           </View>
 
@@ -326,7 +308,7 @@ export default function SettingsScreen() {
             <Switch
               value={settings.showRareSense}
               onValueChange={value => saveSettings({ showRareSense: value })}
-              color="#1976D2"
+              color={colors.primary}
             />
           </View>
 
@@ -338,7 +320,7 @@ export default function SettingsScreen() {
             <Switch
               value={settings.showEtymology}
               onValueChange={value => saveSettings({ showEtymology: value })}
-              color="#1976D2"
+              color={colors.primary}
             />
           </View>
 
@@ -354,7 +336,7 @@ export default function SettingsScreen() {
             <Switch
               value={settings.soundEnabled && settings.autoPlaySound}
               onValueChange={value => saveSettings({ autoPlaySound: value })}
-              color="#1976D2"
+              color={colors.primary}
               disabled={!settings.soundEnabled}
             />
           </View>
@@ -373,7 +355,7 @@ export default function SettingsScreen() {
                 onPress={handleExport}
                 loading={isExporting}
                 disabled={isExporting || isImporting}
-                style={[styles.dataActionBtn, { backgroundColor: palette.successLight }]}
+                style={[styles.dataActionBtn, { backgroundColor: colors.successContainer }]}
                 labelStyle={styles.dataActionText}
               >
                 导出备份
@@ -387,7 +369,7 @@ export default function SettingsScreen() {
                 onPress={handleImport}
                 loading={isImporting}
                 disabled={isExporting || isImporting}
-                style={[styles.dataActionBtn, { backgroundColor: palette.accentLight }]}
+                style={[styles.dataActionBtn, { backgroundColor: colors.secondaryContainer }]}
                 labelStyle={styles.dataActionText}
               >
                 导入备份
@@ -403,13 +385,13 @@ export default function SettingsScreen() {
         <Card.Title title="⚡ 高级选项" titleStyle={styles.cardTitle} />
         <Card.Content>
           <View style={styles.dangerActions}>
-            <Surface style={[styles.dangerBtn, { backgroundColor: palette.dangerLight }]}>
+            <Surface style={[styles.dangerBtn, { backgroundColor: colors.errorContainer }]}>
               <Text style={styles.dangerBtnText} onPress={handleResetDefaults}>
                 重置所有设置
               </Text>
             </Surface>
-            <Surface style={[styles.dangerBtn, { backgroundColor: palette.dangerLight }]}>
-              <Text style={[styles.dangerBtnText, { color: palette.danger }]} onPress={handleClearData}>
+            <Surface style={[styles.dangerBtn, { backgroundColor: colors.errorContainer }]}>
+              <Text style={[styles.dangerBtnText, { color: colors.danger }]} onPress={handleClearData}>
                 清除所有数据
               </Text>
             </Surface>
@@ -546,6 +528,7 @@ const useStyles = makeStyles(colors => ({
   dangerBtnText: {
     fontSize: 14,
     fontWeight: 'bold',
+    color: colors.onSurface,
   },
   footer: {
     alignItems: 'center',

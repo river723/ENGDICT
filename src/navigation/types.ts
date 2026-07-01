@@ -8,6 +8,7 @@ import type { StackNavigationProp } from '@react-navigation/stack';
 export type MainTabParamList = {
   Home: undefined;
   Words: undefined;
+  Dictionary: undefined;
   Profile: undefined;
 };
 
@@ -23,6 +24,8 @@ export type RootStackParamList = {
   WordDetail: { wordId: number };
   Stats: undefined;
   Settings: undefined;
+  DictionaryBrowse: { dictId: string };
+  DictionaryWordDetail: { word: string };
 };
 
 /** 所有屏幕的导航类型：根栈导航即可覆盖全部跳转目标（含 Main 嵌套跳转）。 */

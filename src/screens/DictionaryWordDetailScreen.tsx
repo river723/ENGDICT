@@ -1,10 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import { View, ScrollView, Platform } from 'react-native';
+// src/screens/DictionaryWordDetailScreen.tsx
+//
+// 词典单词详情页（栈屏，只读）。
+// 数据直接取自本地词典（worddict.json），不做写回补全。
+// 额外提供「加入生词本」入口，与个人生词本流程打通。
+
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, ScrollView, StyleSheet, Platform, Alert } from 'react-native';
 import { Text, Chip, Surface, Button, IconButton } from 'react-native-paper';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAppNavigation, useAppRoute } from '../navigation/types';
 import StorageService from '../services/StorageService';
 import { Word } from '../types';
-import { getLocalWordDictResult, wordDictEntryToWord } from '../utils/wordUtils';
+import {
+  getLocalWordDictResult,
+  wordDictEntryToWord,
+} from '../utils/wordUtils';
 import { makeStyles } from '../utils/useStyles';
 
 // Web 平台兼容性处理
@@ -17,62 +27,73 @@ if (Platform.OS !== 'web') {
   }
 }
 
-export default function WordDetailScreen() {
-  const route = useAppRoute<'WordDetail'>();
+const confirmAction = (
+  title: string,
+  message: string,
+  onConfirm: () => void | Promise<void>,
+  confirmText = '确认'
+) => {
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.confirm) {
+    if (window.confirm(`${title}\n\n${message}`)) {
+      onConfirm();
+    }
+    return;
+  }
+  Alert.alert(title, message, [
+    { text: '取消', style: 'cancel' },
+    { text: confirmText, style: 'default', onPress: onConfirm },
+  ]);
+};
+
+export default function DictionaryWordDetailScreen() {
+  const route = useAppRoute<'DictionaryWordDetail'>();
   const navigation = useAppNavigation();
   const styles = useStyles();
+
   const [word, setWord] = useState<Word | null>(null);
+  const [inWordbook, setInWordbook] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
+  // 加载词条：从本地词典读取并转成应用内 Word 结构
   useEffect(() => {
-    const loadWord = async () => {
-      const id = route.params?.wordId;
-      if (!id) return;
-
-      const [loadedWord, appSettings] = await Promise.all([
-        StorageService.getWordById(id),
-        StorageService.getSettings(),
-      ]);
-      setWord(loadedWord);
-      setSoundEnabled(appSettings.soundEnabled !== false);
-    };
-
-    loadWord();
+    const key = route.params?.word;
+    if (!key) {
+      setWord(null);
+      return;
+    }
+    const entry = getLocalWordDictResult(key);
+    if (!entry) {
+      setWord(null);
+      return;
+    }
+    setWord(wordDictEntryToWord(key, entry) as Word);
   }, [route.params]);
 
-  // 本地词典补全：如果当前词缺少词根/例句/易混词，尝试从本地词典补全
-  const enhanceFromLocalDict = async () => {
-    if (!word || !word.id) return;
-    const entry = getLocalWordDictResult(word.word);
-    if (!entry) return;
-
-    const converted = wordDictEntryToWord(word.word, entry);
-    const updates: Partial<Word> = {
-      definitions: converted.definitions,
-      etymology: converted.etymology || word.etymology,
-      similar_words: converted.similar_words || word.similar_words,
-      difficulty: converted.difficulty,
-    };
-    await StorageService.updateWord(word.id, updates);
-    setWord({ ...word, ...updates });
-  };
-
-  // 判断是否可从本地词典补全
-  const hasEty = !!(word?.etymology && word.etymology.trim());
-  const hasExample = (word?.definitions || []).some(d => d.example && d.example.trim());
-  const hasSimilar = Array.isArray(word?.similar_words) && word.similar_words.length > 0;
-  const needsEnhancement = word && (!hasEty || !hasExample || !hasSimilar);
-  const canEnhanceLocal = needsEnhancement && !!getLocalWordDictResult(word.word);
+  // 聚焦时读取生词本与设置，判断当前词是否已在生词本
+  useFocusEffect(
+    useCallback(() => {
+      const key = route.params?.word?.toLowerCase();
+      (async () => {
+        try {
+          const [words, settings] = await Promise.all([
+            StorageService.getWords(),
+            StorageService.getSettings(),
+          ]);
+          setInWordbook(
+            !!key && words.some((w) => w.word.toLowerCase() === key)
+          );
+          setSoundEnabled(settings.soundEnabled !== false);
+        } catch {
+          setInWordbook(false);
+        }
+      })();
+    }, [route.params])
+  );
 
   const speakWord = (text: string) => {
     if (!soundEnabled) return;
-
     if (Speech && Platform.OS !== 'web') {
-      Speech.speak(text, {
-        language: 'en-US',
-        pitch: 1.0,
-        rate: 0.8,
-      });
+      Speech.speak(text, { language: 'en-US', pitch: 1.0, rate: 0.8 });
     } else if (Platform.OS === 'web' && 'speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'en-US';
@@ -81,6 +102,23 @@ export default function WordDetailScreen() {
       window.speechSynthesis.speak(utterance);
     }
   };
+
+  const addToWordbook = useCallback(() => {
+    if (!word || inWordbook) return;
+    confirmAction(
+      '加入生词本？',
+      `将「${word.word}」加入你的生词本`,
+      async () => {
+        try {
+          await StorageService.addWord(word);
+          setInWordbook(true);
+        } catch (e) {
+          console.warn('addWord failed:', e);
+        }
+      },
+      '加入'
+    );
+  }, [word, inWordbook]);
 
   if (!word) {
     return (
@@ -92,13 +130,20 @@ export default function WordDetailScreen() {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+    >
       <Surface style={styles.card}>
         <View style={styles.wordHeader}>
           <View style={styles.wordInfo}>
             <Text style={styles.wordText}>{word.word}</Text>
-            {word.pronunciation_uk && <Text style={styles.pronunciation}>UK {word.pronunciation_uk}</Text>}
-            {word.pronunciation_us && <Text style={styles.pronunciation}>US {word.pronunciation_us}</Text>}
+            {word.pronunciation_uk ? (
+              <Text style={styles.pronunciation}>UK {word.pronunciation_uk}</Text>
+            ) : null}
+            {word.pronunciation_us ? (
+              <Text style={styles.pronunciation}>US {word.pronunciation_us}</Text>
+            ) : null}
           </View>
           <IconButton
             icon={soundEnabled ? 'volume-high' : 'volume-off'}
@@ -115,11 +160,17 @@ export default function WordDetailScreen() {
           <Surface key={index} style={styles.definitionItem}>
             <View style={styles.definitionHeader}>
               <Text style={styles.definitionLabel}>{def.part_of_speech}</Text>
-              {def.is_core && <Chip compact style={styles.chip}>核心</Chip>}
-              {def.is_rare_sense && <Chip compact style={styles.chip}>熟词僻义</Chip>}
+              {def.is_core ? (
+                <Chip compact style={styles.chip}>核心</Chip>
+              ) : null}
+              {def.is_rare_sense ? (
+                <Chip compact style={styles.chip}>熟词僻义</Chip>
+              ) : null}
             </View>
             <Text style={styles.definitionMeaning}>{def.meaning}</Text>
-            {def.example ? <Text style={styles.definitionExample}>例句：{def.example}</Text> : null}
+            {def.example ? (
+              <Text style={styles.definitionExample}>例句：{def.example}</Text>
+            ) : null}
           </Surface>
         ))}
       </Surface>
@@ -136,33 +187,37 @@ export default function WordDetailScreen() {
           <Text style={styles.sectionTitle}>易混词 / 相似词</Text>
           {word.similar_words.map((item, index) => (
             <View key={index} style={styles.similarItem}>
-              <Text style={styles.similarWord}>{item.word} ({item.relation})</Text>
+              <Text style={styles.similarWord}>
+                {item.word} ({item.relation})
+              </Text>
               <Text style={styles.similarDescription}>{item.description}</Text>
             </View>
           ))}
         </Surface>
       ) : null}
 
-      {/* 本地词典补全按钮 */}
-      {canEnhanceLocal ? (
-        <Button
-          mode="outlined"
-          icon="book-search"
-          onPress={enhanceFromLocalDict}
-          style={styles.enhanceBtn}
-        >
-          本地词典补全词根、例句、近义词
-        </Button>
-      ) : null}
+      <Button
+        mode={inWordbook ? 'outlined' : 'contained'}
+        icon={inWordbook ? 'check' : 'book-plus'}
+        onPress={addToWordbook}
+        disabled={inWordbook}
+        style={styles.addBtn}
+      >
+        {inWordbook ? '已在生词本' : '加入生词本'}
+      </Button>
 
-      <Button mode="contained" onPress={() => navigation.goBack()} style={styles.backButton}>
+      <Button
+        mode="text"
+        onPress={() => navigation.goBack()}
+        style={styles.backButton}
+      >
         返回
       </Button>
     </ScrollView>
   );
 }
 
-const useStyles = makeStyles(colors => ({
+const useStyles = makeStyles((colors) => ({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -173,6 +228,8 @@ const useStyles = makeStyles(colors => ({
   card: {
     marginBottom: 16,
     padding: 16,
+    borderRadius: 8,
+    backgroundColor: colors.surface,
   },
   emptyContainer: {
     flex: 1,
@@ -214,7 +271,7 @@ const useStyles = makeStyles(colors => ({
   definitionItem: {
     padding: 12,
     marginBottom: 12,
-    backgroundColor: colors.surfaceVariant,
+    backgroundColor: colors.background,
     borderRadius: 8,
   },
   definitionHeader: {
@@ -257,11 +314,11 @@ const useStyles = makeStyles(colors => ({
     fontSize: 13,
     color: colors.onSurfaceVariant,
   },
-  backButton: {
-    marginTop: 16,
-  },
-  enhanceBtn: {
-    marginBottom: 12,
+  addBtn: {
+    marginBottom: 8,
     borderRadius: 8,
+  },
+  backButton: {
+    marginTop: 4,
   },
 }));

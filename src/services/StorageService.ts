@@ -37,7 +37,7 @@ if (typeof window !== 'undefined') {
   };
 }
 
-const DEFAULT_SETTINGS: AppSettings = {
+export const DEFAULT_SETTINGS: AppSettings = {
   dailyNewWords: 10,
   reviewInterval: [1, 2, 4, 7, 15],
   soundEnabled: true,
@@ -239,6 +239,11 @@ class StorageService {
     const current = await this.getSettings();
     const next = { ...current, ...settings };
     await AsyncStorage.setItem(this.KEYS.SETTINGS, JSON.stringify(next));
+  }
+
+  // 重置设置为默认值（整体覆盖，非合并）
+  async resetSettings(): Promise<void> {
+    await AsyncStorage.setItem(this.KEYS.SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
   }
 
   // 数据导入导出

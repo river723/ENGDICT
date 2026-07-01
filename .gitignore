@@ -57,8 +57,12 @@ yarn-error.*
 
 # Build artifacts
 build/
+!build/icon.ico
 android/app/build/
 ios/build/
+
+# Electron
+dist-electron/
 
 # React Native
 # Xcode

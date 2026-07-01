@@ -5,7 +5,6 @@ import {
   Text,
   Button,
   ProgressBar,
-  Surface,
   IconButton,
   ActivityIndicator,
 } from 'react-native-paper';
@@ -425,13 +424,15 @@ export default function HomeScreen() {
                           onPress={() => {
                             if (word.id != null) navigation.navigate('WordDetail', { wordId: word.id });
                           }}
+                          style={({ pressed }) => [
+                            styles.wordTile,
+                            pressed && styles.wordTilePressed,
+                          ]}
                         >
-                          <Surface style={styles.wordTile} elevation={1}>
-                            <Text style={styles.wordTileText}>{word.word}</Text>
-                            <Text style={styles.wordTileDifficulty}>
-                              {'★'.repeat(Math.max(1, Math.min(5, word.difficulty)))}
-                            </Text>
-                          </Surface>
+                          <Text style={styles.wordTileText}>{word.word}</Text>
+                          <Text style={styles.wordTileDifficulty}>
+                            {'★'.repeat(Math.max(1, Math.min(5, word.difficulty)))}
+                          </Text>
                         </Pressable>
                       ))}
                     </View>
@@ -600,11 +601,15 @@ const useStyles = makeStyles(colors => ({
     paddingRight: 4,
   },
   wordTile: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 10,
-    minHeight: 56,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 8,
+    minHeight: 52,
     justifyContent: 'center',
+    backgroundColor: colors.surfaceVariant,
+  },
+  wordTilePressed: {
+    backgroundColor: colors.primaryContainer,
   },
   wordTileText: {
     fontSize: 16,

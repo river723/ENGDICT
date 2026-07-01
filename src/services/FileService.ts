@@ -15,6 +15,18 @@ class FileService {
   async exportBackupFile(jsonContent: string, fileName: string): Promise<ExportFileResult> {
     const compressed = gzipSync(strToU8(jsonContent));
 
+    // Electron 桌面端：走原生保存对话框
+    if (window.electronAPI?.isAvailable()) {
+      const result = await window.electronAPI.saveBackup(compressed, fileName);
+      if (result.canceled) {
+        throw new Error('EXPORT_CANCELED');
+      }
+      if (result.error) {
+        throw new Error(`导出失败：${result.error}`);
+      }
+      return 'shared';
+    }
+
     if (Platform.OS === 'web') {
       this.downloadBackupFile(compressed, fileName);
       return 'downloaded';
@@ -39,6 +51,22 @@ class FileService {
   }
 
   async pickAndReadBackupFile(): Promise<string | null> {
+    // Electron 桌面端：走原生打开对话框
+    if (window.electronAPI?.isAvailable()) {
+      const result = await window.electronAPI.openBackup();
+      if (result.canceled) {
+        return null;
+      }
+      if (result.error || !result.bytes) {
+        throw new Error('备份文件读取失败。');
+      }
+      try {
+        return strFromU8(gunzipSync(result.bytes));
+      } catch (error) {
+        throw new Error('备份文件已损坏或格式不正确，无法解压。');
+      }
+    }
+
     const result = await DocumentPicker.getDocumentAsync({
       type: '*/*',
       copyToCacheDirectory: true,

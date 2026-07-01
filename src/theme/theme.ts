@@ -19,6 +19,7 @@ export interface AppColors {
   onPrimaryContainer: string;
   secondary: string;
   secondaryContainer: string;
+  successContainer: string;
   error: string;
   errorContainer: string;
   onSurface: string;
@@ -41,6 +42,7 @@ const lightColors: AppColors = {
   onPrimaryContainer: palette.primaryDark,
   secondary: palette.accent,
   secondaryContainer: palette.accentLight,
+  successContainer: palette.successLight,
   error: palette.danger,
   errorContainer: palette.dangerLight,
   onSurface: palette.textPrimary,
@@ -62,6 +64,7 @@ const darkColors: AppColors = {
   onPrimaryContainer: '#90CAF9',
   secondary: '#FFB74D',
   secondaryContainer: '#3E2A14',
+  successContainer: '#1E3A2A',
   error: '#EF5350',
   errorContainer: '#4A1F22',
   onSurface: '#EAEAEA',

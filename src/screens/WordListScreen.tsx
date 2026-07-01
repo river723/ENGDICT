@@ -14,7 +14,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useAppNavigation } from '../navigation/types';
 import { makeStyles } from '../utils/useStyles';
 import { useAppTheme } from '../theme/theme';
-import { palette } from '../theme/tokens';
+import { difficultyColor } from '../theme/tokens';
 import StorageService from '../services/StorageService';
 import { Word } from '../types';
 
@@ -134,7 +134,7 @@ export default function WordListScreen() {
       <Surface style={styles.wordItem}>
         <View style={styles.wordItemHeader}>
           <Text style={styles.wordText}>{item.word}</Text>
-          <Text style={styles.difficultyText}>
+          <Text style={[styles.difficultyText, { color: difficultyColor(item.difficulty) }]}>
             {getDifficultyStars(item.difficulty)}
           </Text>
         </View>
@@ -147,10 +147,10 @@ export default function WordListScreen() {
         {(item.definitions[0]?.is_core || item.definitions[0]?.is_rare_sense) && (
           <View style={styles.tags}>
             {item.definitions[0]?.is_core && (
-              <Chip mode="flat" compact style={styles.coreTag}>核心</Chip>
+              <Chip compact style={styles.tagChip}>核心</Chip>
             )}
             {item.definitions[0]?.is_rare_sense && (
-              <Chip mode="flat" compact style={styles.rareTag}>熟词僻义</Chip>
+              <Chip compact style={styles.tagChip}>熟词僻义</Chip>
             )}
           </View>
         )}
@@ -167,14 +167,14 @@ export default function WordListScreen() {
             style={styles.actionBtn}
             onPress={() => handleDelete(item)}
           >
-            <MaterialIcons name="delete-outline" size={20} color={palette.danger} />
-            <Text style={[styles.actionText, { color: palette.danger }]}>删除</Text>
+            <MaterialIcons name="delete-outline" size={20} color={colors.danger} />
+            <Text style={[styles.actionText, { color: colors.danger }]}>删除</Text>
           </TouchableOpacity>
           <View style={styles.frequencyBar}>
             <View style={[styles.frequencyFill, {
               width: `${Math.min(item.frequency * 10, 100)}%`,
-              backgroundColor: item.frequency >= 7 ? palette.success :
-                              item.frequency >= 4 ? palette.accent : palette.danger
+              backgroundColor: item.frequency >= 7 ? colors.success :
+                              item.frequency >= 4 ? colors.warning : colors.danger
             }]} />
           </View>
         </View>
@@ -306,7 +306,7 @@ export default function WordListScreen() {
               </PaperButton>
               <PaperButton
                 onPress={confirmDelete}
-                style={{ color: palette.danger }}
+                textColor={colors.danger}
               >
                 删除
               </PaperButton>
@@ -391,7 +391,6 @@ const useStyles = makeStyles(colors => ({
   },
   difficultyText: {
     fontSize: 11,
-    color: palette.accent,
     marginTop: 2,
   },
   meaning: {
@@ -405,11 +404,8 @@ const useStyles = makeStyles(colors => ({
     gap: 6,
     marginBottom: 4,
   },
-  coreTag: {
-    backgroundColor: palette.primaryLight,
-  },
-  rareTag: {
-    backgroundColor: palette.accentLight,
+  tagChip: {
+    height: 26,
   },
   etymology: {
     fontSize: 12,

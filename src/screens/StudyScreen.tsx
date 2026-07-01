@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, ScrollView, StyleSheet, TextInput, Platform } from 'react-native';
+import { View, ScrollView, TextInput, Platform } from 'react-native';
 import {
   Card,
   Text,
@@ -15,6 +15,8 @@ import StorageService from '../services/StorageService';
 import { Word, StudyRecord } from '../types';
 import { REVIEW_INTERVALS } from '../constants';
 import { format, addDays } from 'date-fns';
+import { useAppTheme } from '../theme/theme';
+import { makeStyles } from '../utils/useStyles';
 
 type StudyScreenMode = 'flashcard' | 'listening' | 'quiz';
 
@@ -31,6 +33,8 @@ if (Platform.OS !== 'web') {
 export default function StudyScreen() {
   const navigation = useAppNavigation();
   const route = useAppRoute<'Study'>();
+  const { colors } = useAppTheme();
+  const styles = useStyles();
   const customWordIds = Array.isArray(route.params?.wordIds)
     ? route.params.wordIds.filter((id: unknown): id is number => typeof id === 'number')
     : [];
@@ -479,8 +483,12 @@ export default function StudyScreen() {
                   <Surface key={index} style={styles.definitionItem}>
                     <View style={styles.definitionHeader}>
                       <Text style={styles.partOfSpeech}>{def.part_of_speech}</Text>
-                      {def.is_core && <Chip mode="flat" compact style={styles.coreTag}>核心</Chip>}
-                      {def.is_rare_sense && <Chip mode="flat" compact style={styles.rareTag}>熟词僻义</Chip>}
+                      {def.is_core && (
+                        <Chip mode="flat" compact style={styles.coreTag} textStyle={styles.coreTagText}>核心</Chip>
+                      )}
+                      {def.is_rare_sense && (
+                        <Chip mode="flat" compact style={styles.rareTag} textStyle={styles.rareTagText}>熟词僻义</Chip>
+                      )}
                     </View>
                     <Text style={styles.meaning}>{def.meaning}</Text>
                     {def.example && (
@@ -506,14 +514,14 @@ export default function StudyScreen() {
             <Button
               mode="contained"
               onPress={() => handleResult(false)}
-              style={[styles.resultButton, { backgroundColor: '#F44336' }]}
+              style={[styles.resultButton, { backgroundColor: colors.danger }]}
             >
               不认识
             </Button>
             <Button
               mode="contained"
               onPress={() => handleResult(true)}
-              style={[styles.resultButton, { backgroundColor: '#4CAF50' }]}
+              style={[styles.resultButton, { backgroundColor: colors.success }]}
             >
               认识
             </Button>
@@ -728,7 +736,7 @@ export default function StudyScreen() {
                 mode="text"
                 onPress={() => setShowExitConfirm(true)}
                 icon="close"
-                textColor="#999"
+                textColor={colors.tertiary}
                 compact
                 style={styles.exitBtn}
               >
@@ -738,7 +746,7 @@ export default function StudyScreen() {
           </View>
           <ProgressBar
             progress={(currentIndex + 1) / Math.max(words.length, 1)}
-            color="#1976D2"
+            color={colors.primary}
             style={styles.progressBar}
           />
         </Card.Content>
@@ -771,8 +779,8 @@ export default function StudyScreen() {
                 </View>
                 <View style={styles.completionStatItem}>
                   <Text style={[styles.completionStatNumber, {
-                    color: studyStats.accuracy >= 80 ? '#4CAF50' :
-                           studyStats.accuracy >= 60 ? '#FF9800' : '#F44336'
+                    color: studyStats.accuracy >= 80 ? colors.success :
+                           studyStats.accuracy >= 60 ? colors.warning : colors.danger
                   }]}>
                     {studyStats.accuracy.toFixed(1)}%
                   </Text>
@@ -852,7 +860,7 @@ export default function StudyScreen() {
                   setShowExitConfirm(false);
                   navigation.goBack();
                 }}
-                buttonColor="#F44336"
+                buttonColor={colors.danger}
               >
                 退出
               </Button>
@@ -864,10 +872,10 @@ export default function StudyScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles(colors => ({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: colors.background,
     padding: 16,
   },
   modeSelector: {
@@ -893,11 +901,11 @@ const styles = StyleSheet.create({
   progressText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#1976D2',
+    color: colors.primary,
   },
   accuracyText: {
     fontSize: 14,
-    color: '#666',
+    color: colors.onSurfaceVariant,
   },
   progressBar: {
     height: 8,
@@ -933,11 +941,11 @@ const styles = StyleSheet.create({
   cardBackWord: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1976D2',
+    color: colors.primary,
   },
   cardBackPronunciation: {
     fontSize: 13,
-    color: '#888',
+    color: colors.onSurfaceVariant,
     marginBottom: 12,
   },
   etymologyBox: {
@@ -945,29 +953,29 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderRadius: 8,
     elevation: 1,
-    backgroundColor: '#F5F0FF',
+    backgroundColor: colors.surfaceVariant,
   },
   etymologyTitle: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#7C4DFF',
+    color: colors.primary,
     marginBottom: 4,
   },
   etymologyText: {
     fontSize: 13,
-    color: '#555',
+    color: colors.onSurfaceVariant,
     lineHeight: 18,
   },
   wordText: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#1976D2',
+    color: colors.primary,
     textAlign: 'center',
     marginBottom: 8,
   },
   pronunciation: {
     fontSize: 14,
-    color: '#666',
+    color: colors.onSurfaceVariant,
     textAlign: 'center',
     marginBottom: 16,
   },
@@ -976,7 +984,7 @@ const styles = StyleSheet.create({
   },
   flipHint: {
     fontSize: 14,
-    color: '#999',
+    color: colors.tertiary,
     fontStyle: 'italic',
   },
   flipButton: {
@@ -994,7 +1002,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderRadius: 8,
     elevation: 1,
-    backgroundColor: '#F0FFF0',
+    backgroundColor: colors.surfaceVariant,
   },
   definitionHeader: {
     flexDirection: 'row',
@@ -1003,23 +1011,30 @@ const styles = StyleSheet.create({
   },
   partOfSpeech: {
     fontSize: 12,
-    color: '#666',
+    color: colors.onSurfaceVariant,
     marginRight: 8,
   },
   coreTag: {
-    backgroundColor: '#1976D2',
+    backgroundColor: colors.primaryContainer,
+  },
+  coreTagText: {
+    color: colors.onPrimaryContainer,
   },
   rareTag: {
-    backgroundColor: '#FF9800',
+    backgroundColor: colors.secondaryContainer,
+  },
+  rareTagText: {
+    color: colors.onSurfaceVariant,
   },
   meaning: {
     fontSize: 16,
     lineHeight: 24,
     marginBottom: 4,
+    color: colors.onSurface,
   },
   example: {
     fontSize: 14,
-    color: '#666',
+    color: colors.onSurfaceVariant,
     fontStyle: 'italic',
   },
   listeningContainer: {
@@ -1030,7 +1045,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 24,
-    color: '#1976D2',
+    color: colors.primary,
   },
   soundIcon: {
     width: 80,
@@ -1038,7 +1053,7 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#E3F2FD',
+    backgroundColor: colors.primaryContainer,
     marginBottom: 16,
   },
   soundEmoji: {
@@ -1046,7 +1061,7 @@ const styles = StyleSheet.create({
   },
   listeningHint: {
     fontSize: 16,
-    color: '#666',
+    color: colors.onSurfaceVariant,
     marginBottom: 24,
     textAlign: 'center',
   },
@@ -1062,6 +1077,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginBottom: 12,
     textAlign: 'center',
+    color: colors.onSurface,
   },
   listenInput: {
     marginBottom: 16,
@@ -1078,13 +1094,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 16,
-    color: '#1976D2',
+    color: colors.primary,
   },
   quizWord: {
     fontSize: 28,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 24,
+    color: colors.onSurface,
   },
   optionsContainer: {
     gap: 12,
@@ -1092,23 +1109,23 @@ const styles = StyleSheet.create({
   optionItem: {
     borderRadius: 8,
     elevation: 1,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: colors.surfaceVariant,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: colors.outline,
   },
   selectedOption: {
-    backgroundColor: '#E3F2FD',
-    borderColor: '#1976D2',
+    backgroundColor: colors.primaryContainer,
+    borderColor: colors.primary,
     borderWidth: 2,
   },
   correctOption: {
-    backgroundColor: '#E8F5E8',
-    borderColor: '#4CAF50',
+    backgroundColor: colors.successContainer,
+    borderColor: colors.success,
     borderWidth: 2,
   },
   incorrectOption: {
-    backgroundColor: '#FFEBEE',
-    borderColor: '#F44336',
+    backgroundColor: colors.errorContainer,
+    borderColor: colors.danger,
     borderWidth: 2,
   },
   optionButton: {
@@ -1118,6 +1135,7 @@ const styles = StyleSheet.create({
   optionText: {
     fontSize: 14,
     textAlign: 'left',
+    color: colors.onSurface,
   },
   resultIcon: {
     fontSize: 20,
@@ -1134,11 +1152,11 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 16,
-    color: '#1976D2',
+    color: colors.primary,
   },
   emptyText: {
     fontSize: 16,
-    color: '#666',
+    color: colors.onSurfaceVariant,
     textAlign: 'center',
     marginBottom: 24,
   },
@@ -1163,7 +1181,7 @@ const styles = StyleSheet.create({
   completionTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1976D2',
+    color: colors.primary,
     marginBottom: 24,
     textAlign: 'center',
   },
@@ -1179,16 +1197,16 @@ const styles = StyleSheet.create({
   completionStatNumber: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1976D2',
+    color: colors.primary,
   },
   completionStatLabel: {
     fontSize: 12,
-    color: '#666',
+    color: colors.onSurfaceVariant,
     marginTop: 4,
   },
   completionDetail: {
     fontSize: 14,
-    color: '#888',
+    color: colors.tertiary,
     marginBottom: 28,
   },
   completionActions: {
@@ -1219,12 +1237,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 12,
-    color: '#333',
+    color: colors.onSurface,
   },
   modalText: {
     fontSize: 14,
     textAlign: 'center',
-    color: '#666',
+    color: colors.onSurfaceVariant,
     marginBottom: 20,
     lineHeight: 22,
   },
@@ -1256,9 +1274,9 @@ const styles = StyleSheet.create({
     minWidth: 200,
   },
   correctColor: {
-    color: '#4CAF50',
+    color: colors.success,
   },
   incorrectColor: {
-    color: '#F44336',
+    color: colors.danger,
   },
-});
+}));

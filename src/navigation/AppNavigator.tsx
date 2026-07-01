@@ -14,6 +14,9 @@ import WordDetailScreen from '../screens/WordDetailScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import WordbankPickerScreen from '../screens/WordbankPickerScreen';
+import DictionaryScreen from '../screens/DictionaryScreen';
+import DictionaryBrowseScreen from '../screens/DictionaryBrowseScreen';
+import DictionaryWordDetailScreen from '../screens/DictionaryWordDetailScreen';
 import type { RootStackParamList, MainTabParamList } from './types';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -33,7 +36,7 @@ const stackHeaderOptions = (title: string, colors: { primary: string; surface: s
   headerBackTitleVisible: false,
 });
 
-// 主标签导航（3 个 Tab：学习 / 生词本 / 我的）
+// 主标签导航（4 个 Tab：学习 / 生词本 / 词库 / 我的）
 // 图标名需精确匹配 MaterialIcons 的字面量联合类型，用查找表保证类型安全
 const TAB_ICONS: Record<
   keyof MainTabParamList,
@@ -41,6 +44,7 @@ const TAB_ICONS: Record<
 > = {
   Home: 'home',
   Words: 'book',
+  Dictionary: 'library-books',
   Profile: 'account-circle',
 };
 
@@ -70,6 +74,7 @@ function MainTabs() {
     >
       <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: '学习' }} />
       <Tab.Screen name="Words" component={WordListScreen} options={{ tabBarLabel: '生词本' }} />
+      <Tab.Screen name="Dictionary" component={DictionaryScreen} options={{ tabBarLabel: '词库' }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ tabBarLabel: '我的' }} />
     </Tab.Navigator>
   );
@@ -113,6 +118,16 @@ export default function AppNavigator() {
           name="Settings"
           component={SettingsScreen}
           options={header('设置')}
+        />
+        <Stack.Screen
+          name="DictionaryBrowse"
+          component={DictionaryBrowseScreen}
+          options={header('词库')}
+        />
+        <Stack.Screen
+          name="DictionaryWordDetail"
+          component={DictionaryWordDetailScreen}
+          options={header('单词详情')}
         />
       </Stack.Navigator>
     </NavigationContainer>
