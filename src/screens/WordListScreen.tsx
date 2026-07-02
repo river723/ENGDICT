@@ -195,7 +195,7 @@ export default function WordListScreen() {
         </View>
       </Surface>
     </TouchableOpacity>
-  ), [navigation, handleDelete, getDifficultyStars]);
+  ), [navigation, handleDelete, getDifficultyStars, styles, colors]);
 
   return (
     <View style={styles.container}>
@@ -352,16 +352,17 @@ const useStyles = makeStyles(colors => ({
   header: {
     padding: 20,
     paddingBottom: 16,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.appBar,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
+    color: colors.onAppBar,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
+    color: colors.onAppBar,
+    opacity: 0.8,
     marginTop: 4,
   },
   searchCard: {
@@ -408,6 +409,7 @@ const useStyles = makeStyles(colors => ({
     borderRadius: 12,
     padding: 14,
     elevation: 1,
+    backgroundColor: colors.surface,
   },
   wordItemHeader: {
     flexDirection: 'row',
@@ -518,6 +520,7 @@ const useStyles = makeStyles(colors => ({
     width: 300,
     padding: 24,
     borderRadius: 12,
+    backgroundColor: colors.surface,
   },
   modalTitle: {
     fontSize: 18,

@@ -26,6 +26,9 @@ export interface AppColors {
   onSurfaceVariant: string;
   tertiary: string;
   outline: string;
+  // 顶栏（导航栏 / 页面头部）：浅色下为品牌蓝，深色下与底部标签栏一致的深表面
+  appBar: string;
+  onAppBar: string;
   // 语义常量
   accent: string;
   success: string;
@@ -49,6 +52,8 @@ const lightColors: AppColors = {
   onSurfaceVariant: palette.textSecondary,
   tertiary: palette.textTertiary,
   outline: palette.border,
+  appBar: palette.primary,
+  onAppBar: '#fff',
   accent: palette.accent,
   success: palette.success,
   danger: palette.danger,
@@ -71,6 +76,8 @@ const darkColors: AppColors = {
   onSurfaceVariant: '#B0B0B0',
   tertiary: '#808080',
   outline: '#3A3A3A',
+  appBar: '#1E1E1E',
+  onAppBar: '#EAEAEA',
   accent: palette.accent,
   success: palette.success,
   danger: palette.danger,

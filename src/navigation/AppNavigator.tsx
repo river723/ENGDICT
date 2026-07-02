@@ -23,13 +23,13 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 const Stack = createStackNavigator<RootStackParamList>();
 
 // 统一的 Stack header 样式：所有栈屏一律显示标题栏（含返回按钮），Web 与移动端一致
-const stackHeaderOptions = (title: string, colors: { primary: string; surface: string; onSurface: string }) => ({
+const stackHeaderOptions = (title: string, colors: { appBar: string; onAppBar: string }) => ({
   headerShown: true as boolean,
   title,
   headerStyle: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.appBar,
   },
-  headerTintColor: '#fff',
+  headerTintColor: colors.onAppBar,
   headerTitleStyle: {
     fontWeight: 'bold' as const,
   },

@@ -6,7 +6,6 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef, startTransition } from 'react';
 import {
   View,
-  StyleSheet,
   FlatList,
   Platform,
   TouchableOpacity,
@@ -27,7 +26,8 @@ import StorageService from '../services/StorageService';
 import { Word } from '../types';
 import { getLocalWordDictWords, seededShuffle } from '../utils/wordUtils';
 import SortPicker, { SortOption } from '../components/SortPicker';
-import { palette } from '../theme/tokens';
+import { makeStyles } from '../utils/useStyles';
+import { difficultyColor } from '../theme/tokens';
 
 type WordbankEntry = Omit<Word, 'id' | 'created_at' | 'updated_at'>;
 
@@ -41,14 +41,6 @@ const SORT_OPTIONS: SortOption<SortMode>[] = [
   { value: 'freqDesc', label: '考频↓' },
   { value: 'shuffle', label: '乱序' },
 ];
-
-const DIFF_COLORS: Record<number, string> = {
-  1: palette.success,
-  2: palette.accent,
-  3: palette.accent,
-  4: palette.danger,
-  5: palette.danger,
-};
 
 const ROW_HEIGHT = 72;
 const PAGE_SIZE = 10;
@@ -91,6 +83,7 @@ const WordRow = React.memo(function WordRow({
   onToggle,
   onIgnore,
 }: WordRowProps) {
+  const styles = useRowStyles();
   return (
     <View style={[styles.row, isSelected && styles.rowSelected]}>
       <TouchableOpacity
@@ -123,7 +116,8 @@ const WordRow = React.memo(function WordRow({
 
         {/* 难度 + 频率 */}
         <View style={styles.metaCol}>
-          <Text style={[styles.diffBadge, { color: DIFF_COLORS[entry.difficulty] || '#999' }]}>
+          {/* 难度色为语义常量，不随主题变 */}
+          <Text style={[styles.diffBadge, { color: difficultyColor(entry.difficulty) }]}>
             {'★'.repeat(entry.difficulty)}{'☆'.repeat(5 - entry.difficulty)}
           </Text>
           <Text style={styles.freqBadge}>
@@ -142,12 +136,110 @@ const WordRow = React.memo(function WordRow({
   );
 });
 
+const useRowStyles = makeStyles((colors) => ({
+  row: {
+    height: ROW_HEIGHT,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+    borderRadius: 8,
+    backgroundColor: colors.surface,
+    elevation: 1,
+    overflow: 'hidden',
+  },
+  rowContent: {
+    flex: 1,
+    height: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 12,
+    paddingRight: 6,
+  },
+  rowSelected: {
+    backgroundColor: colors.primaryContainer,
+    elevation: 2,
+  },
+  checkCol: {
+    width: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderWidth: 2,
+    borderColor: colors.outline,
+    borderRadius: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  checkmark: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  infoCol: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingRight: 8,
+  },
+  wordLine: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginBottom: 2,
+  },
+  word: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.onSurface,
+  },
+  phonetic: {
+    fontSize: 12,
+    color: colors.tertiary,
+    fontFamily: Platform.OS === 'web' ? 'monospace' : undefined,
+  },
+  meaning: {
+    fontSize: 13,
+    color: colors.onSurfaceVariant,
+    lineHeight: 18,
+  },
+  metaCol: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    minWidth: 70,
+  },
+  diffBadge: {
+    fontSize: 11,
+    lineHeight: 14,
+  },
+  freqBadge: {
+    fontSize: 10,
+    color: colors.tertiary,
+    marginTop: 2,
+  },
+  ignorePill: {
+    alignSelf: 'stretch',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    backgroundColor: colors.secondaryContainer,
+  },
+  ignorePillText: {
+    fontSize: 12,
+    color: colors.warning,
+  },
+}));
+
 // -----------------------------------------------------------------------
 // 主页面
 
 export default function WordbankPickerScreen() {
   const navigation = useAppNavigation();
   const flatRef = useRef<FlatList>(null);
+  const styles = useStyles();
 
   // 数据
   const [list] = useState<WordbankEntry[]>(() => getLocalWordDictWords());
@@ -633,12 +725,12 @@ export default function WordbankPickerScreen() {
 }
 
 // -----------------------------------------------------------------------
-// StyleSheet
+// 主题化样式
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   screen: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: colors.background,
   },
 
   // 状态栏
@@ -649,10 +741,10 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'web' ? 8 : 4,
     paddingBottom: 6,
   },
-  statusText: { fontSize: 13, color: '#666' },
-  statusSelected: { fontSize: 13, color: '#1976D2' },
-  statusExisting: { fontSize: 13, color: '#999' },
-  statusIgnored: { fontSize: 13, color: '#F57C00' },
+  statusText: { fontSize: 13, color: colors.onSurfaceVariant },
+  statusSelected: { fontSize: 13, color: colors.primary },
+  statusExisting: { fontSize: 13, color: colors.tertiary },
+  statusIgnored: { fontSize: 13, color: colors.warning },
 
   // 搜索
   searchCard: {
@@ -660,6 +752,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     elevation: 1,
     borderRadius: 8,
+    backgroundColor: colors.surface,
   },
   searchInput: {
     backgroundColor: 'transparent',
@@ -688,7 +781,7 @@ const styles = StyleSheet.create({
   },
   filterLabel: {
     fontSize: 12,
-    color: '#999',
+    color: colors.tertiary,
     marginHorizontal: 4,
   },
   filterChip: {
@@ -699,102 +792,6 @@ const styles = StyleSheet.create({
   list: {
     flex: 1,
     paddingHorizontal: 12,
-  },
-
-  // 行
-  row: {
-    height: ROW_HEIGHT,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-    borderRadius: 8,
-    backgroundColor: '#FFF',
-    elevation: 1,
-    overflow: 'hidden',
-  },
-  rowContent: {
-    flex: 1,
-    height: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingLeft: 12,
-    paddingRight: 6,
-  },
-  rowSelected: {
-    backgroundColor: '#E3F2FD',
-    elevation: 2,
-  },
-  checkCol: {
-    width: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkbox: {
-    width: 22,
-    height: 22,
-    borderWidth: 2,
-    borderColor: '#9E9E9E',
-    borderRadius: 3,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkboxChecked: {
-    backgroundColor: '#1976D2',
-    borderColor: '#1976D2',
-  },
-  checkmark: {
-    color: '#FFF',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  infoCol: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingRight: 8,
-  },
-  wordLine: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    marginBottom: 2,
-  },
-  word: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  phonetic: {
-    fontSize: 12,
-    color: '#999',
-    fontFamily: Platform.OS === 'web' ? 'monospace' : undefined,
-  },
-  meaning: {
-    fontSize: 13,
-    color: '#666',
-    lineHeight: 18,
-  },
-  metaCol: {
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-    minWidth: 70,
-  },
-  diffBadge: {
-    fontSize: 11,
-    lineHeight: 14,
-  },
-  freqBadge: {
-    fontSize: 10,
-    color: '#AAA',
-    marginTop: 2,
-  },
-  ignorePill: {
-    alignSelf: 'stretch',
-    justifyContent: 'center',
-    paddingHorizontal: 12,
-    backgroundColor: '#FFF3E0',
-  },
-  ignorePillText: {
-    fontSize: 12,
-    color: '#F57C00',
   },
 
   // 空态
@@ -808,12 +805,12 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 15,
-    color: '#999',
+    color: colors.onSurfaceVariant,
     marginTop: 12,
   },
   emptyHint: {
     fontSize: 13,
-    color: '#CCC',
+    color: colors.tertiary,
     marginTop: 4,
   },
 
@@ -822,15 +819,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-    backgroundColor: '#FFF',
+    borderTopColor: colors.outline,
+    backgroundColor: colors.surface,
   },
   bottomHintWrap: {
     marginBottom: 8,
   },
   bottomHint: {
     fontSize: 12,
-    color: '#888',
+    color: colors.onSurfaceVariant,
     textAlign: 'center',
   },
   bottomBtnRow: {
@@ -859,6 +856,6 @@ const styles = StyleSheet.create({
   },
   groupHeaderText: {
     fontSize: 12,
-    color: '#666',
+    color: colors.onSurfaceVariant,
   },
-});
+}));

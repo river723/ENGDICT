@@ -85,6 +85,10 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>👤 我的</Text>
+        <Text style={styles.headerSubtitle}>学习概览与应用设置</Text>
+      </View>
       <ScrollView contentContainerStyle={styles.content}>
         {/* 学习统计概览 */}
         <Card style={styles.card}>
@@ -133,6 +137,22 @@ const useStyles = makeStyles(colors => ({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  header: {
+    padding: 20,
+    paddingBottom: 16,
+    backgroundColor: colors.appBar,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.onAppBar,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: colors.onAppBar,
+    opacity: 0.8,
+    marginTop: 4,
   },
   content: {
     padding: 16,

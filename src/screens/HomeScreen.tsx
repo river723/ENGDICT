@@ -281,10 +281,14 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>👋 学习</Text>
+        <Text style={styles.headerSubtitle}>坚持每日打卡，稳步提升词汇量</Text>
+      </View>
       <ScrollView contentContainerStyle={styles.content}>
         {showSpinner && (
           <View style={styles.centerState}>
-            <ActivityIndicator size="large" color="#1976D2" />
+            <ActivityIndicator size="large" color={colors.primary} />
             <Text style={styles.centerStateText}>加载中…</Text>
           </View>
         )}
@@ -469,6 +473,22 @@ const useStyles = makeStyles(colors => ({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  header: {
+    padding: 20,
+    paddingBottom: 16,
+    backgroundColor: colors.appBar,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.onAppBar,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: colors.onAppBar,
+    opacity: 0.8,
+    marginTop: 4,
   },
   content: {
     padding: 16,

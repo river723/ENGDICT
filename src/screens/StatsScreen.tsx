@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { View, ScrollView } from 'react-native';
 import {
   Card,
   Text,
@@ -12,9 +12,13 @@ import StorageService from '../services/StorageService';
 import StudyPlanService from '../services/StudyPlanService';
 import { Word, StudyRecord, WeeklyStudyTrend } from '../types';
 import { format } from 'date-fns';
+import { makeStyles } from '../utils/useStyles';
+import { useAppTheme } from '../theme/theme';
 
 export default function StatsScreen() {
   const navigation = useAppNavigation();
+  const styles = useStyles();
+  const { colors } = useAppTheme();
   const [stats, setStats] = useState({
     totalWords: 0,
     todayStudyCount: 0,
@@ -96,7 +100,7 @@ export default function StatsScreen() {
     return '#F44336';
   };
 
-  const renderProgressBar = (value: number, color: string = '#1976D2') => (
+  const renderProgressBar = (value: number, color: string = colors.primary) => (
     <View style={styles.progressBarContainer}>
       <View style={[styles.progressBarFill, { width: `${Math.min(value, 100)}%`, backgroundColor: color }]} />
     </View>
@@ -123,13 +127,13 @@ export default function StatsScreen() {
               <Text style={styles.statLabel}>今日学习</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={[styles.statNumber, { color: '#4CAF50' }]}>
+              <Text style={[styles.statNumber, { color: colors.success }]}>
                 {stats.todayAccuracy.toFixed(0)}%
               </Text>
               <Text style={styles.statLabel}>今日正确率</Text>
             </View>
           </View>
-          {renderProgressBar(stats.todayAccuracy, '#4CAF50')}
+          {renderProgressBar(stats.todayAccuracy, colors.success)}
         </Card.Content>
       </Card>
 
@@ -139,11 +143,11 @@ export default function StatsScreen() {
           <Text style={styles.sectionTitle}>📚 词汇统计</Text>
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Text style={[styles.statNumber, { color: '#1976D2' }]}>{stats.totalWords}</Text>
+              <Text style={[styles.statNumber, { color: colors.primary }]}>{stats.totalWords}</Text>
               <Text style={styles.statLabel}>总单词数</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={[styles.statNumber, { color: '#4CAF50' }]}>{stats.masteredWords}</Text>
+              <Text style={[styles.statNumber, { color: colors.success }]}>{stats.masteredWords}</Text>
               <Text style={styles.statLabel}>已掌握</Text>
             </View>
           </View>
@@ -261,20 +265,21 @@ export default function StatsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: colors.background,
     padding: 16,
   },
   card: {
     marginBottom: 16,
     elevation: 2,
+    backgroundColor: colors.surface,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1976D2',
+    color: colors.primary,
     marginBottom: 16,
   },
   statsRow: {
@@ -288,16 +293,16 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1976D2',
+    color: colors.primary,
   },
   statLabel: {
     fontSize: 14,
-    color: '#666',
+    color: colors.onSurfaceVariant,
     marginTop: 4,
   },
   progressBarContainer: {
     height: 8,
-    backgroundColor: '#E3F2FD',
+    backgroundColor: colors.primaryContainer,
     borderRadius: 4,
     overflow: 'hidden',
     marginTop: 8,
@@ -315,18 +320,18 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     paddingVertical: 8,
-    backgroundColor: '#F5F7FA',
+    backgroundColor: colors.surfaceVariant,
     borderRadius: 8,
     marginHorizontal: 3,
   },
   trendMetricValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1976D2',
+    color: colors.primary,
   },
   trendMetricLabel: {
     fontSize: 11,
-    color: '#666',
+    color: colors.onSurfaceVariant,
     marginTop: 3,
   },
   weeklyChart: {
@@ -346,12 +351,13 @@ const styles = StyleSheet.create({
   },
   chartLabel: {
     fontSize: 10,
-    color: '#666',
+    color: colors.onSurfaceVariant,
     marginTop: 8,
   },
   chartValue: {
     fontSize: 12,
     fontWeight: 'bold',
+    color: colors.onSurface,
     marginTop: 4,
   },
   chartSubValue: {
@@ -361,12 +367,12 @@ const styles = StyleSheet.create({
   },
   chartPlanValue: {
     fontSize: 9,
-    color: '#777',
+    color: colors.tertiary,
     marginTop: 2,
   },
   trendHint: {
     fontSize: 11,
-    color: '#888',
+    color: colors.tertiary,
     textAlign: 'center',
     marginTop: 8,
   },
@@ -377,15 +383,15 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 8,
     borderRadius: 8,
-    backgroundColor: '#FFF8E1',
+    backgroundColor: colors.secondaryContainer,
   },
   difficultWordText: {
     fontSize: 16,
-    color: '#F57C00',
+    color: colors.warning,
     fontWeight: '500',
   },
   difficultChip: {
-    backgroundColor: '#FFE0B2',
+    backgroundColor: colors.secondaryContainer,
   },
   reinforceButton: {
     marginTop: 8,
@@ -393,7 +399,7 @@ const styles = StyleSheet.create({
   },
   noDataText: {
     textAlign: 'center',
-    color: '#9E9E9E',
+    color: colors.tertiary,
     padding: 16,
     fontSize: 14,
   },
@@ -411,6 +417,6 @@ const styles = StyleSheet.create({
   },
   milestoneText: {
     fontSize: 14,
-    color: '#333',
+    color: colors.onSurface,
   },
-});
+}));

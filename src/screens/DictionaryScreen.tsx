@@ -5,7 +5,7 @@
 // 数据源为 src/data/dictionaries.ts 注册表，新增词库只需追加一项。
 
 import React from 'react';
-import { View, ScrollView, StyleSheet, Platform } from 'react-native';
+import { View, ScrollView } from 'react-native';
 import { Card, Text, Button } from 'react-native-paper';
 import { useAppNavigation } from '../navigation/types';
 import { DICTIONARIES, DictMeta } from '../data/dictionaries';
@@ -20,71 +20,80 @@ export default function DictionaryScreen() {
   };
 
   return (
-    <ScrollView
-      style={styles.screen}
-      contentContainerStyle={styles.content}
-    >
+    <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>词库</Text>
-        <Text style={styles.subtitle}>
+        <Text style={styles.headerTitle}>📖 词库</Text>
+        <Text style={styles.headerSubtitle}>
           选择一个词库打开，可浏览全部单词或按单词查询
         </Text>
       </View>
 
-      {DICTIONARIES.map((dict) => (
-        <Card key={dict.id} style={styles.card} elevation={1}>
-          <Card.Content>
-            <View style={styles.cardHeader}>
-              <Text style={styles.dictName}>{dict.name}</Text>
-              <View style={styles.countBadge}>
-                <Text style={styles.countText}>
-                  {dict.wordCount.toLocaleString()} 词
-                </Text>
+      <ScrollView
+        style={styles.screen}
+        contentContainerStyle={styles.content}
+      >
+        {DICTIONARIES.map((dict) => (
+          <Card key={dict.id} style={styles.card} elevation={1}>
+            <Card.Content>
+              <View style={styles.cardHeader}>
+                <Text style={styles.dictName}>{dict.name}</Text>
+                <View style={styles.countBadge}>
+                  <Text style={styles.countText}>
+                    {dict.wordCount.toLocaleString()} 词
+                  </Text>
+                </View>
               </View>
-            </View>
-            <Text style={styles.dictDesc}>{dict.description}</Text>
-          </Card.Content>
-          <Card.Actions style={styles.actions}>
-            <Button
-              mode="contained"
-              icon="book-open-variant"
-              onPress={() => openDict(dict)}
-              style={styles.openBtn}
-              contentStyle={styles.openBtnContent}
-            >
-              打开词库
-            </Button>
-          </Card.Actions>
-        </Card>
-      ))}
+              <Text style={styles.dictDesc}>{dict.description}</Text>
+            </Card.Content>
+            <Card.Actions style={styles.actions}>
+              <Button
+                mode="contained"
+                icon="book-open-variant"
+                onPress={() => openDict(dict)}
+                style={styles.openBtn}
+                contentStyle={styles.openBtnContent}
+              >
+                打开词库
+              </Button>
+            </Card.Actions>
+          </Card>
+        ))}
 
-      <Text style={styles.footerHint}>
-        💡 更多词库持续整理中
-      </Text>
-    </ScrollView>
+        <Text style={styles.footerHint}>
+          💡 更多词库持续整理中
+        </Text>
+      </ScrollView>
+    </View>
   );
 }
 
 const useStyles = makeStyles((colors) => ({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   screen: {
     flex: 1,
     backgroundColor: colors.background,
   },
   content: {
     padding: 16,
-    paddingTop: Platform.OS === 'web' ? 16 : 24,
+    paddingTop: 16,
   },
   header: {
-    marginBottom: 16,
+    padding: 20,
+    paddingBottom: 16,
+    backgroundColor: colors.appBar,
   },
-  title: {
-    fontSize: 26,
+  headerTitle: {
+    fontSize: 24,
     fontWeight: 'bold',
-    color: colors.onSurface,
+    color: colors.onAppBar,
   },
-  subtitle: {
-    fontSize: 13,
-    color: colors.onSurfaceVariant,
+  headerSubtitle: {
+    fontSize: 14,
+    color: colors.onAppBar,
+    opacity: 0.8,
     marginTop: 4,
     lineHeight: 18,
   },
