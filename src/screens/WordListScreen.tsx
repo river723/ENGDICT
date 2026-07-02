@@ -16,18 +16,22 @@ import { makeStyles } from '../utils/useStyles';
 import { useAppTheme } from '../theme/theme';
 import { difficultyColor } from '../theme/tokens';
 import StorageService from '../services/StorageService';
+import SortPicker, { SortOption } from '../components/SortPicker';
 import { Word } from '../types';
 
-type SortMode = 'recent' | 'alpha' | 'diffAsc' | 'diffDesc';
+type SortMode = 'recent' | 'alpha' | 'diffAsc' | 'diffDesc' | 'freqAsc' | 'freqDesc';
 
-const SORT_LABELS: Record<SortMode, string> = {
-  recent: '最近',
-  alpha: '字母',
-  diffAsc: '难度↑',
-  diffDesc: '难度↓',
-};
+const SORT_OPTIONS: SortOption<SortMode>[] = [
+  { value: 'recent', label: '最近' },
+  { value: 'alpha', label: '字母' },
+  { value: 'diffAsc', label: '难度↑' },
+  { value: 'diffDesc', label: '难度↓' },
+  { value: 'freqAsc', label: '考频↑' },
+  { value: 'freqDesc', label: '考频↓' },
+];
 
 const DIFFICULTY_LEVELS = [1, 2, 3, 4, 5] as const;
+const FREQUENCY_LEVELS = [1, 2, 3, 4, 5] as const;
 
 export default function WordListScreen() {
   const navigation = useAppNavigation();
@@ -37,6 +41,7 @@ export default function WordListScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [diffFilter, setDiffFilter] = useState<number | null>(null);
+  const [freqFilter, setFreqFilter] = useState<number | null>(null);
   const [sortMode, setSortMode] = useState<SortMode>('recent');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [wordToDelete, setWordToDelete] = useState<Word | null>(null);
@@ -74,6 +79,10 @@ export default function WordListScreen() {
       result = result.filter(w => w.difficulty === diffFilter);
     }
 
+    if (freqFilter !== null) {
+      result = result.filter(w => w.frequency === freqFilter);
+    }
+
     return result.sort((a, b) => {
       switch (sortMode) {
         case 'alpha':
@@ -82,6 +91,10 @@ export default function WordListScreen() {
           return a.difficulty - b.difficulty;
         case 'diffDesc':
           return b.difficulty - a.difficulty;
+        case 'freqAsc':
+          return a.frequency - b.frequency;
+        case 'freqDesc':
+          return b.frequency - a.frequency;
         case 'recent':
         default:
           return (
@@ -90,7 +103,7 @@ export default function WordListScreen() {
           );
       }
     });
-  }, [words, debouncedSearchQuery, diffFilter, sortMode]);
+  }, [words, debouncedSearchQuery, diffFilter, freqFilter, sortMode]);
 
   const handleDelete = useCallback((word: Word) => {
     setWordToDelete(word);
@@ -134,9 +147,14 @@ export default function WordListScreen() {
       <Surface style={styles.wordItem}>
         <View style={styles.wordItemHeader}>
           <Text style={styles.wordText}>{item.word}</Text>
-          <Text style={[styles.difficultyText, { color: difficultyColor(item.difficulty) }]}>
-            {getDifficultyStars(item.difficulty)}
-          </Text>
+          <View style={styles.badges}>
+            <Text style={[styles.difficultyText, { color: difficultyColor(item.difficulty) }]}>
+              {getDifficultyStars(item.difficulty)}
+            </Text>
+            <Text style={styles.freqText}>
+              {'■'.repeat(item.frequency)}{'□'.repeat(5 - item.frequency)}
+            </Text>
+          </View>
         </View>
 
         <Text style={styles.meaning}>
@@ -170,12 +188,9 @@ export default function WordListScreen() {
             <MaterialIcons name="delete-outline" size={20} color={colors.danger} />
             <Text style={[styles.actionText, { color: colors.danger }]}>删除</Text>
           </TouchableOpacity>
-          <View style={styles.frequencyBar}>
-            <View style={[styles.frequencyFill, {
-              width: `${Math.min(item.frequency * 10, 100)}%`,
-              backgroundColor: item.frequency >= 7 ? colors.success :
-                              item.frequency >= 4 ? colors.warning : colors.danger
-            }]} />
+          <View style={styles.metaLabels}>
+            <Text style={[styles.metaLabel, { color: difficultyColor(item.difficulty) }]}>难度</Text>
+            <Text style={styles.metaLabel}>考频</Text>
           </View>
         </View>
       </Surface>
@@ -206,7 +221,8 @@ export default function WordListScreen() {
 
       {/* 筛选与排序 */}
       <View style={styles.filterRow}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+        <SortPicker options={SORT_OPTIONS} value={sortMode} onChange={setSortMode} />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScrollView} contentContainerStyle={styles.filterScroll}>
           <Text style={styles.filterLabel}>难度</Text>
           <Chip
             selected={diffFilter === null}
@@ -231,18 +247,28 @@ export default function WordListScreen() {
               {level}★
             </Chip>
           ))}
-          <Text style={styles.filterLabel}>排序</Text>
-          {(Object.keys(SORT_LABELS) as SortMode[]).map(mode => (
+          <Text style={styles.filterLabel}>考频</Text>
+          <Chip
+            selected={freqFilter === null}
+            showSelectedCheck={false}
+            onPress={() => setFreqFilter(null)}
+            mode="outlined"
+            compact
+            style={styles.filterChip}
+          >
+            全部
+          </Chip>
+          {FREQUENCY_LEVELS.map(level => (
             <Chip
-              key={mode}
-              selected={sortMode === mode}
+              key={level}
+              selected={freqFilter === level}
               showSelectedCheck={false}
-              onPress={() => setSortMode(mode)}
+              onPress={() => setFreqFilter(level)}
               mode="outlined"
               compact
               style={styles.filterChip}
             >
-              {SORT_LABELS[mode]}
+              {level}■
             </Chip>
           ))}
         </ScrollView>
@@ -351,9 +377,15 @@ const useStyles = makeStyles(colors => ({
   filterRow: {
     marginTop: 4,
     marginBottom: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 16,
+  },
+  filterScrollView: {
+    flex: 1,
   },
   filterScroll: {
-    paddingHorizontal: 16,
+    paddingRight: 16,
     paddingVertical: 4,
     gap: 6,
     alignItems: 'center',
@@ -389,8 +421,17 @@ const useStyles = makeStyles(colors => ({
     color: colors.primary,
     flexShrink: 1,
   },
+  badges: {
+    alignItems: 'flex-end',
+    marginLeft: 8,
+  },
   difficultyText: {
     fontSize: 11,
+    marginTop: 2,
+  },
+  freqText: {
+    fontSize: 10,
+    color: colors.onSurfaceVariant,
     marginTop: 2,
   },
   meaning: {
@@ -427,15 +468,13 @@ const useStyles = makeStyles(colors => ({
     fontSize: 12,
     fontWeight: '500',
   },
-  frequencyBar: {
-    width: 100,
-    height: 6,
-    backgroundColor: colors.surfaceVariant,
-    borderRadius: 3,
+  metaLabels: {
+    flexDirection: 'row',
+    gap: 16,
   },
-  frequencyFill: {
-    height: '100%',
-    borderRadius: 3,
+  metaLabel: {
+    fontSize: 10,
+    color: colors.onSurfaceVariant,
   },
   emptyContainer: {
     flex: 1,

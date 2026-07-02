@@ -79,6 +79,7 @@ export interface WordDictEntry {
   etymology?: string;
   similar_words?: SimilarWord[];
   suggestedDifficulty?: number; // 本地词典建议难度 1-5
+  examFrequency?: number;       // 考试考频 1-5（5 最高）
 }
 
 export interface WordDictJson {

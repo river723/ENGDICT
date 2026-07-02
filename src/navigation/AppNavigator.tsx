@@ -86,7 +86,10 @@ export default function AppNavigator() {
   const header = (title: string) => stackHeaderOptions(title, colors);
 
   return (
-    <NavigationContainer theme={dark ? darkNavTheme : lightNavTheme}>
+    <NavigationContainer
+      theme={dark ? darkNavTheme : lightNavTheme}
+      documentTitle={{ formatter: () => '考研英语生词本' }}
+    >
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Main" component={MainTabs} />
         <Stack.Screen

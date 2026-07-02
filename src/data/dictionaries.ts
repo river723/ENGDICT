@@ -23,8 +23,8 @@ export interface DictMeta {
 export const DICTIONARIES: DictMeta[] = [
   {
     id: 'kaoyan',
-    name: '考研英语词库',
-    description: '内置增强词典，含词根词缀、例句、易混词与建议难度',
+    name: '考研英语词库(精简应试版)',
+    description: '根据近20年真题剔除了超简单初高中基础词、极低频次出现的小众冷词、淘汰词汇，只保留真题有考察价值的词，内置增强词典，含词根词缀、例句、易混词与建议难度。',
     wordCount: Object.keys(worddict.results).length,
   },
 ];

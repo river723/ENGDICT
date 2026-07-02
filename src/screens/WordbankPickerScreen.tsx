@@ -3,7 +3,7 @@
 // 从本地增强词典勾选单词，批量加入生词本。
 // 数据来自 src/data/worddict.json，已包含词根、例句、易混词。
 
-import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef, startTransition } from 'react';
 import {
   View,
   StyleSheet,
@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   Alert,
   SafeAreaView,
+  ScrollView,
 } from 'react-native';
 import {
   Card,
@@ -24,20 +25,22 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useAppNavigation } from '../navigation/types';
 import StorageService from '../services/StorageService';
 import { Word } from '../types';
-import { getLocalWordDictWords } from '../utils/wordUtils';
+import { getLocalWordDictWords, seededShuffle } from '../utils/wordUtils';
+import SortPicker, { SortOption } from '../components/SortPicker';
 import { palette } from '../theme/tokens';
 
 type WordbankEntry = Omit<Word, 'id' | 'created_at' | 'updated_at'>;
 
-type SortMode = 'alpha' | 'diffAsc' | 'diffDesc' | 'freqAsc' | 'freqDesc';
+type SortMode = 'alpha' | 'diffAsc' | 'diffDesc' | 'freqAsc' | 'freqDesc' | 'shuffle';
 
-const SORT_LABEL: Record<SortMode, string> = {
-  alpha: '字母',
-  diffAsc: '难度↑',
-  diffDesc: '难度↓',
-  freqAsc: '频度↑',
-  freqDesc: '频度↓',
-};
+const SORT_OPTIONS: SortOption<SortMode>[] = [
+  { value: 'alpha', label: '字母' },
+  { value: 'diffAsc', label: '难度↑' },
+  { value: 'diffDesc', label: '难度↓' },
+  { value: 'freqAsc', label: '考频↑' },
+  { value: 'freqDesc', label: '考频↓' },
+  { value: 'shuffle', label: '乱序' },
+];
 
 const DIFF_COLORS: Record<number, string> = {
   1: palette.success,
@@ -49,6 +52,9 @@ const DIFF_COLORS: Record<number, string> = {
 
 const ROW_HEIGHT = 72;
 const PAGE_SIZE = 10;
+
+const DIFFICULTY_LEVELS = [1, 2, 3, 4, 5] as const;
+const FREQUENCY_LEVELS = [1, 2, 3, 4, 5] as const;
 
 const confirmAction = (
   title: string,
@@ -121,7 +127,7 @@ const WordRow = React.memo(function WordRow({
             {'★'.repeat(entry.difficulty)}{'☆'.repeat(5 - entry.difficulty)}
           </Text>
           <Text style={styles.freqBadge}>
-            {'■'.repeat(entry.frequency)}{'□'.repeat(3 - entry.frequency)}
+            {'■'.repeat(entry.frequency)}{'□'.repeat(5 - entry.frequency)}
           </Text>
         </View>
       </TouchableOpacity>
@@ -154,6 +160,9 @@ export default function WordbankPickerScreen() {
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [sortMode, setSortMode] = useState<SortMode>('alpha');
+  const [shuffleSeed, setShuffleSeed] = useState(1);
+  const [diffFilter, setDiffFilter] = useState<number | null>(null);
+  const [freqFilter, setFreqFilter] = useState<number | null>(null);
 
   // 分组
   const [group, setGroup] = useState(0);
@@ -201,6 +210,14 @@ export default function WordbankPickerScreen() {
       });
     }
 
+    if (diffFilter !== null) {
+      items = items.filter((e) => e.difficulty === diffFilter);
+    }
+
+    if (freqFilter !== null) {
+      items = items.filter((e) => e.frequency === freqFilter);
+    }
+
     if (sortMode === 'diffAsc') {
       items = items.slice().sort((a, b) => a.difficulty - b.difficulty);
     } else if (sortMode === 'diffDesc') {
@@ -209,11 +226,13 @@ export default function WordbankPickerScreen() {
       items = items.slice().sort((a, b) => a.frequency - b.frequency);
     } else if (sortMode === 'freqDesc') {
       items = items.slice().sort((a, b) => b.frequency - a.frequency);
+    } else if (sortMode === 'shuffle') {
+      items = seededShuffle(items, shuffleSeed);
     }
     // sortMode==='alpha' 维持 JSON 内置字母序
 
     return items;
-  }, [list, debouncedQuery, sortMode]);
+  }, [list, debouncedQuery, sortMode, diffFilter, freqFilter, shuffleSeed]);
 
   // 第二层：剔除已在词本和已忽略的词 → 候选池
   const pool = useMemo(
@@ -233,10 +252,23 @@ export default function WordbankPickerScreen() {
   const totalGroups = Math.max(1, Math.ceil(pool.length / PAGE_SIZE));
   const isLastGroup = group >= totalGroups - 1;
 
-  // 筛选/搜索/排序变更 → 回到第 1 组
+  // 切换排序：chip 高亮立即响应，列表重算走 transition（不阻塞交互）
+  // 同时把回到第 1 组合并进来，避免 setSortMode→useEffect→setGroup 的双重渲染
+  // 点“乱序”时刷新 seed（再点一次也重洗）
+  const changeSort = useCallback((mode: SortMode) => {
+    startTransition(() => {
+      if (mode === 'shuffle') {
+        setShuffleSeed((s) => s + 1);
+      }
+      setSortMode(mode);
+      setGroup(0);
+    });
+  }, []);
+
+  // 搜索 / 筛选变更 → 回到第 1 组
   useEffect(() => {
     setGroup(0);
-  }, [debouncedQuery, sortMode]);
+  }, [debouncedQuery, diffFilter, freqFilter]);
 
   // 加入后 pool 缩短可能让 group 越界 → 自动夹到合法范围
   useEffect(() => {
@@ -441,29 +473,63 @@ export default function WordbankPickerScreen() {
         />
       </Card>
 
-      {/* 筛选 Chip 行 */}
+      {/* 排序 */}
       <View style={styles.chipRow}>
-        <View style={styles.chipGroup}>
-          <Text style={styles.chipGroupLabel}>排序</Text>
-          {(['alpha', 'diffAsc', 'diffDesc', 'freqAsc', 'freqDesc'] as SortMode[]).map(
-            (v) => (
-              <Chip
-                key={v}
-                selected={sortMode === v}
-                showSelectedCheck={false}
-                onPress={() => setSortMode(v)}
-                style={[
-                  styles.chip,
-                  sortMode === v && styles.chipSelected
-                ]}
-                mode="outlined"
-                compact
-              >
-                {SORT_LABEL[v]}
-              </Chip>
-            )
-          )}
-        </View>
+        <SortPicker options={SORT_OPTIONS} value={sortMode} onChange={changeSort} />
+      </View>
+
+      {/* 难度 / 考频筛选 */}
+      <View style={styles.filterRow}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+          <Text style={styles.filterLabel}>难度</Text>
+          <Chip
+            selected={diffFilter === null}
+            showSelectedCheck={false}
+            onPress={() => setDiffFilter(null)}
+            mode="outlined"
+            compact
+            style={styles.filterChip}
+          >
+            全部
+          </Chip>
+          {DIFFICULTY_LEVELS.map((level) => (
+            <Chip
+              key={level}
+              selected={diffFilter === level}
+              showSelectedCheck={false}
+              onPress={() => setDiffFilter(level)}
+              mode="outlined"
+              compact
+              style={styles.filterChip}
+            >
+              {level}★
+            </Chip>
+          ))}
+          <Text style={styles.filterLabel}>考频</Text>
+          <Chip
+            selected={freqFilter === null}
+            showSelectedCheck={false}
+            onPress={() => setFreqFilter(null)}
+            mode="outlined"
+            compact
+            style={styles.filterChip}
+          >
+            全部
+          </Chip>
+          {FREQUENCY_LEVELS.map((level) => (
+            <Chip
+              key={level}
+              selected={freqFilter === level}
+              showSelectedCheck={false}
+              onPress={() => setFreqFilter(level)}
+              mode="outlined"
+              compact
+              style={styles.filterChip}
+            >
+              {level}■
+            </Chip>
+          ))}
+        </ScrollView>
       </View>
 
       {/* 全选工具条 */}
@@ -600,25 +666,33 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
 
-  // 筛选行
+  // 排序行
   chipRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 12,
     paddingBottom: 6,
     gap: 6,
   },
-  chipGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
+
+  // 难度 / 考频筛选行
+  filterRow: {
+    paddingLeft: 12,
+    paddingBottom: 6,
+  },
+  filterScroll: {
+    paddingRight: 12,
+    paddingVertical: 4,
     gap: 6,
-    marginBottom: 4,
+    alignItems: 'center',
   },
-  chipGroupLabel: { fontSize: 12, color: '#999', marginRight: 2 },
-  chip: {
+  filterLabel: {
+    fontSize: 12,
+    color: '#999',
+    marginHorizontal: 4,
+  },
+  filterChip: {
     height: 28,
-  },
-  chipSelected: {
-    backgroundColor: '#E3F2FD',
   },
 
   // 列表

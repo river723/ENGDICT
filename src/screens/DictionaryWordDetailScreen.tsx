@@ -16,6 +16,7 @@ import {
   wordDictEntryToWord,
 } from '../utils/wordUtils';
 import { makeStyles } from '../utils/useStyles';
+import { difficultyColor, palette } from '../theme/tokens';
 
 // Web 平台兼容性处理
 let Speech: any = null;
@@ -152,6 +153,14 @@ export default function DictionaryWordDetailScreen() {
             disabled={!soundEnabled}
           />
         </View>
+        <View style={styles.metaRow}>
+          <Text style={[styles.metaBadge, { color: difficultyColor(word.difficulty) }]}>
+            难度 {'★'.repeat(word.difficulty)}{'☆'.repeat(5 - word.difficulty)}
+          </Text>
+          <Text style={styles.freqBadge}>
+            考频 {'■'.repeat(word.frequency)}{'□'.repeat(5 - word.frequency)}
+          </Text>
+        </View>
       </Surface>
 
       <Surface style={styles.card}>
@@ -261,6 +270,20 @@ const useStyles = makeStyles((colors) => ({
     fontSize: 14,
     color: colors.onSurfaceVariant,
     marginBottom: 4,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 4,
+  },
+  metaBadge: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  freqBadge: {
+    fontSize: 12,
+    color: colors.onSurfaceVariant,
+    lineHeight: 16,
   },
   sectionTitle: {
     fontSize: 16,

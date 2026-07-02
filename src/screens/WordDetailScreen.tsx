@@ -6,6 +6,7 @@ import StorageService from '../services/StorageService';
 import { Word } from '../types';
 import { getLocalWordDictResult, wordDictEntryToWord } from '../utils/wordUtils';
 import { makeStyles } from '../utils/useStyles';
+import { difficultyColor } from '../theme/tokens';
 
 // Web 平台兼容性处理
 let Speech: any = null;
@@ -52,6 +53,7 @@ export default function WordDetailScreen() {
       etymology: converted.etymology || word.etymology,
       similar_words: converted.similar_words || word.similar_words,
       difficulty: converted.difficulty,
+      frequency: converted.frequency,
     };
     await StorageService.updateWord(word.id, updates);
     setWord({ ...word, ...updates });
@@ -106,6 +108,14 @@ export default function WordDetailScreen() {
             onPress={() => speakWord(word.word)}
             disabled={!soundEnabled}
           />
+        </View>
+        <View style={styles.metaRow}>
+          <Text style={[styles.metaBadge, { color: difficultyColor(word.difficulty) }]}>
+            难度 {'★'.repeat(word.difficulty)}{'☆'.repeat(5 - word.difficulty)}
+          </Text>
+          <Text style={styles.freqBadge}>
+            考频 {'■'.repeat(word.frequency)}{'□'.repeat(5 - word.frequency)}
+          </Text>
         </View>
       </Surface>
 
@@ -204,6 +214,20 @@ const useStyles = makeStyles(colors => ({
     fontSize: 14,
     color: colors.onSurfaceVariant,
     marginBottom: 4,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 4,
+  },
+  metaBadge: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  freqBadge: {
+    fontSize: 12,
+    color: colors.onSurfaceVariant,
+    lineHeight: 16,
   },
   sectionTitle: {
     fontSize: 16,

@@ -8,9 +8,9 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "jest",
-    "build:web": "expo export:web",
+    "build:web": "expo export -p web",
     "electron:dev": "concurrently \"expo start --web\" \"wait-on http://localhost:8081 && electron electron/main.js\"",
-    "electron:build": "expo export:web && electron-builder --win"
+    "electron:build": "expo export -p web && electron-builder --win"
   },
   "dependencies": {
     "@expo/metro-runtime": "~55.0.0",
@@ -62,10 +62,14 @@
       "buildResources": "build"
     },
     "files": [
-      "web-build/**/*",
       "electron/**/*",
-      "!**/node_modules/**/*"
+      "!node_modules/**/*"
     ],
+    "extraResources": {
+      "from": "dist",
+      "to": "dist",
+      "filter": ["**/*"]
+    },
     "extraMetadata": {
       "main": "electron/main.js"
     },
