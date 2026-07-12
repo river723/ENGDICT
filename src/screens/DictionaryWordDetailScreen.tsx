@@ -54,6 +54,9 @@ export default function DictionaryWordDetailScreen() {
   const [word, setWord] = useState<Word | null>(null);
   const [inWordbook, setInWordbook] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [showRareSense, setShowRareSense] = useState(true);
+  const [showEtymology, setShowEtymology] = useState(true);
+  const [showMemoryTip, setShowMemoryTip] = useState(true);
 
   // 加载词条：从本地词典读取并转成应用内 Word 结构
   useEffect(() => {
@@ -84,6 +87,9 @@ export default function DictionaryWordDetailScreen() {
             !!key && words.some((w) => w.word.toLowerCase() === key)
           );
           setSoundEnabled(settings.soundEnabled !== false);
+          setShowRareSense(settings.showRareSense !== false);
+          setShowEtymology(settings.showEtymology !== false);
+          setShowMemoryTip(settings.showMemoryTip !== false);
         } catch {
           setInWordbook(false);
         }
@@ -172,7 +178,7 @@ export default function DictionaryWordDetailScreen() {
               {def.is_core ? (
                 <Chip compact style={styles.chip}>核心</Chip>
               ) : null}
-              {def.is_rare_sense ? (
+              {def.is_rare_sense && showRareSense ? (
                 <Chip compact style={styles.chip}>熟词僻义</Chip>
               ) : null}
             </View>
@@ -184,14 +190,14 @@ export default function DictionaryWordDetailScreen() {
         ))}
       </Surface>
 
-      {word.etymology ? (
+      {word.etymology && showEtymology ? (
         <Surface style={styles.card}>
           <Text style={styles.sectionTitle}>词根词缀</Text>
           <Text style={styles.sectionText}>{word.etymology}</Text>
         </Surface>
       ) : null}
 
-      {word.memoryTip ? (
+      {word.memoryTip && showMemoryTip ? (
         <Surface style={styles.card}>
           <Text style={styles.sectionTitle}>记忆技巧</Text>
           <Text style={styles.sectionText}>{word.memoryTip}</Text>

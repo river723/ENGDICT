@@ -67,6 +67,11 @@ export default function StudyScreen() {
     soundEnabled: true,
     autoPlaySound: false,
   });
+  const [displaySettings, setDisplaySettings] = useState({
+    showRareSense: true,
+    showEtymology: true,
+    showMemoryTip: true,
+  });
   // 用 useRef 追踪重试中单词的连续正确次数，不在 Map 中的单词 = 还没答错过（首次答对即过关）
   const retryMapRef = useRef<Map<number, number>>(new Map());
   const pendingIndexRef = useRef<number>(0);
@@ -99,6 +104,11 @@ export default function StudyScreen() {
       setSpeechSettings({
         soundEnabled: settings.soundEnabled !== false,
         autoPlaySound: settings.autoPlaySound === true,
+      });
+      setDisplaySettings({
+        showRareSense: settings.showRareSense !== false,
+        showEtymology: settings.showEtymology !== false,
+        showMemoryTip: settings.showMemoryTip !== false,
       });
       const dailyLimit = typeof settings.dailyNewWords === 'number'
         ? settings.dailyNewWords
@@ -471,7 +481,7 @@ export default function StudyScreen() {
                 )}
 
                 {/* 词根词缀 */}
-                {currentWord.etymology && (
+                {currentWord.etymology && displaySettings.showEtymology && (
                   <Surface style={styles.etymologyBox}>
                     <Text style={styles.etymologyTitle}>🔍 词根词缀</Text>
                     <Text style={styles.etymologyText}>{currentWord.etymology}</Text>
@@ -479,7 +489,7 @@ export default function StudyScreen() {
                 )}
 
                 {/* 记忆技巧 */}
-                {currentWord.memoryTip && (
+                {currentWord.memoryTip && displaySettings.showMemoryTip && (
                   <Surface style={styles.memoryTipBox}>
                     <Text style={styles.memoryTipTitle}>💡 记忆技巧</Text>
                     <Text style={styles.memoryTipText}>{currentWord.memoryTip}</Text>
@@ -494,7 +504,7 @@ export default function StudyScreen() {
                       {def.is_core && (
                         <Chip mode="flat" compact style={styles.coreTag} textStyle={styles.coreTagText}>核心</Chip>
                       )}
-                      {def.is_rare_sense && (
+                      {def.is_rare_sense && displaySettings.showRareSense && (
                         <Chip mode="flat" compact style={styles.rareTag} textStyle={styles.rareTagText}>熟词僻义</Chip>
                       )}
                     </View>

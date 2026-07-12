@@ -24,6 +24,9 @@ export default function WordDetailScreen() {
   const styles = useStyles();
   const [word, setWord] = useState<Word | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [showRareSense, setShowRareSense] = useState(true);
+  const [showEtymology, setShowEtymology] = useState(true);
+  const [showMemoryTip, setShowMemoryTip] = useState(true);
 
   useEffect(() => {
     const loadWord = async () => {
@@ -36,6 +39,9 @@ export default function WordDetailScreen() {
       ]);
       setWord(loadedWord);
       setSoundEnabled(appSettings.soundEnabled !== false);
+      setShowRareSense(appSettings.showRareSense !== false);
+      setShowEtymology(appSettings.showEtymology !== false);
+      setShowMemoryTip(appSettings.showMemoryTip !== false);
     };
 
     loadWord();
@@ -128,7 +134,7 @@ export default function WordDetailScreen() {
             <View style={styles.definitionHeader}>
               <Text style={styles.definitionLabel}>{def.part_of_speech}</Text>
               {def.is_core && <Chip compact style={styles.chip}>核心</Chip>}
-              {def.is_rare_sense && <Chip compact style={styles.chip}>熟词僻义</Chip>}
+              {def.is_rare_sense && showRareSense && <Chip compact style={styles.chip}>熟词僻义</Chip>}
             </View>
             <Text style={styles.definitionMeaning}>{def.meaning}</Text>
             {def.example ? <Text style={styles.definitionExample}>例句：{def.example}</Text> : null}
@@ -136,14 +142,14 @@ export default function WordDetailScreen() {
         ))}
       </Surface>
 
-      {word.etymology ? (
+      {word.etymology && showEtymology ? (
         <Surface style={styles.card}>
           <Text style={styles.sectionTitle}>词根词缀</Text>
           <Text style={styles.sectionText}>{word.etymology}</Text>
         </Surface>
       ) : null}
 
-      {word.memoryTip ? (
+      {word.memoryTip && showMemoryTip ? (
         <Surface style={styles.card}>
           <Text style={styles.sectionTitle}>记忆技巧</Text>
           <Text style={styles.sectionText}>{word.memoryTip}</Text>

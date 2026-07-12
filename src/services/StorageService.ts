@@ -46,6 +46,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   fontSize: 14,
   showRareSense: true,
   showEtymology: true,
+  showMemoryTip: true,
 };
 
 class StorageService {

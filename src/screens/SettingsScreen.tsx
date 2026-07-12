@@ -326,6 +326,18 @@ export default function SettingsScreen() {
 
           <View style={styles.toggleRow}>
             <View>
+              <Text style={styles.toggleLabel}>💡 记忆技巧</Text>
+              <Text style={styles.toggleSublabel}>显示谐音、联想等记忆法</Text>
+            </View>
+            <Switch
+              value={settings.showMemoryTip}
+              onValueChange={value => saveSettings({ showMemoryTip: value })}
+              color={colors.primary}
+            />
+          </View>
+
+          <View style={styles.toggleRow}>
+            <View>
               <Text style={[styles.toggleLabel, !settings.soundEnabled && styles.disabledText]}>
                 🔊 自动发音
               </Text>

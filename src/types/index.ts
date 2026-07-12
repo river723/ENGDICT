@@ -54,6 +54,7 @@ export interface AppSettings {
   fontSize: number;
   showRareSense: boolean;
   showEtymology: boolean;
+  showMemoryTip: boolean;
 }
 
 export interface DailyStats {
