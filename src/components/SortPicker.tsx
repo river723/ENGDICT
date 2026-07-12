@@ -6,7 +6,7 @@
 import React, { useState, useCallback } from 'react';
 import { TouchableOpacity, Modal } from 'react-native';
 import { Chip, Text, Surface } from 'react-native-paper';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { makeStyles } from '../utils/useStyles';
 import { useAppTheme } from '../theme/theme';
 
@@ -44,11 +44,18 @@ export default function SortPicker<T extends string>({
   return (
     <>
       <Chip
-        icon="sort"
+        icon={() => (
+          <MaterialCommunityIcons
+            name="sort"
+            size={16}
+            color={colors.onSurfaceVariant}
+          />
+        )}
         onPress={() => setVisible(true)}
         mode="flat"
         compact
         style={styles.sortChip}
+        textStyle={styles.chipText}
       >
         {currentLabel}
       </Chip>
@@ -94,8 +101,12 @@ export default function SortPicker<T extends string>({
 
 const useStyles = makeStyles((colors) => ({
   sortChip: {
-    height: 28,
     marginRight: 8,
+  },
+  chipText: {
+    fontSize: 12,
+    lineHeight: 16,
+    marginVertical: 4,
   },
   modalOverlay: {
     flex: 1,

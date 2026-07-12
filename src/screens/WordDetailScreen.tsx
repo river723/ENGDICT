@@ -52,6 +52,7 @@ export default function WordDetailScreen() {
       definitions: converted.definitions,
       etymology: converted.etymology || word.etymology,
       similar_words: converted.similar_words || word.similar_words,
+      memoryTip: converted.memoryTip || word.memoryTip,
       difficulty: converted.difficulty,
       frequency: converted.frequency,
     };
@@ -63,7 +64,8 @@ export default function WordDetailScreen() {
   const hasEty = !!(word?.etymology && word.etymology.trim());
   const hasExample = (word?.definitions || []).some(d => d.example && d.example.trim());
   const hasSimilar = Array.isArray(word?.similar_words) && word.similar_words.length > 0;
-  const needsEnhancement = word && (!hasEty || !hasExample || !hasSimilar);
+  const hasMemoryTip = !!(word?.memoryTip && word.memoryTip.trim());
+  const needsEnhancement = word && (!hasEty || !hasExample || !hasSimilar || !hasMemoryTip);
   const canEnhanceLocal = needsEnhancement && !!getLocalWordDictResult(word.word);
 
   const speakWord = (text: string) => {
@@ -138,6 +140,13 @@ export default function WordDetailScreen() {
         <Surface style={styles.card}>
           <Text style={styles.sectionTitle}>词根词缀</Text>
           <Text style={styles.sectionText}>{word.etymology}</Text>
+        </Surface>
+      ) : null}
+
+      {word.memoryTip ? (
+        <Surface style={styles.card}>
+          <Text style={styles.sectionTitle}>记忆技巧</Text>
+          <Text style={styles.sectionText}>{word.memoryTip}</Text>
         </Surface>
       ) : null}
 

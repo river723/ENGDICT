@@ -64,7 +64,8 @@ class StorageService {
     STUDY_RECORDS: 'kaoyan_study_records',
     STUDY_PLANS: 'kaoyan_study_plans',
     SETTINGS: 'kaoyan_settings',
-    IGNORED_WORDBANK_WORDS: 'kaoyan_ignored_wordbank_words'
+    IGNORED_WORDBANK_WORDS: 'kaoyan_ignored_wordbank_words',
+    SCREEN_FILTERS: 'kaoyan_screen_filters'
   };
 
   // 生词操作
@@ -150,6 +151,34 @@ class StorageService {
 
   async clearIgnoredWordbankWords(): Promise<void> {
     await AsyncStorage.removeItem(this.KEYS.IGNORED_WORDBANK_WORDS);
+  }
+
+  // 各页面筛选/排序偏好（按页面名分区存于同一 key）
+  private async getAllScreenFilters(): Promise<Record<string, any>> {
+    try {
+      const data = await AsyncStorage.getItem(this.KEYS.SCREEN_FILTERS);
+      return data ? JSON.parse(data) : {};
+    } catch (error) {
+      console.error('Get screen filters error:', error);
+      return {};
+    }
+  }
+
+  async getScreenFilters<T>(screen: string): Promise<Partial<T>> {
+    const all = await this.getAllScreenFilters();
+    return (all[screen] as Partial<T>) || {};
+  }
+
+  async saveScreenFilters<T extends object>(
+    screen: string,
+    prefs: T
+  ): Promise<void> {
+    const all = await this.getAllScreenFilters();
+    all[screen] = prefs;
+    await AsyncStorage.setItem(
+      this.KEYS.SCREEN_FILTERS,
+      JSON.stringify(all)
+    );
   }
 
   // 学习记录操作
@@ -297,7 +326,8 @@ class StorageService {
       this.KEYS.STUDY_RECORDS,
       this.KEYS.STUDY_PLANS,
       this.KEYS.IGNORED_WORDBANK_WORDS,
-      this.KEYS.SETTINGS
+      this.KEYS.SETTINGS,
+      this.KEYS.SCREEN_FILTERS
     ]);
   }
 }

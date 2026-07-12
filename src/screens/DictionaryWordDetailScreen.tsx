@@ -191,6 +191,13 @@ export default function DictionaryWordDetailScreen() {
         </Surface>
       ) : null}
 
+      {word.memoryTip ? (
+        <Surface style={styles.card}>
+          <Text style={styles.sectionTitle}>记忆技巧</Text>
+          <Text style={styles.sectionText}>{word.memoryTip}</Text>
+        </Surface>
+      ) : null}
+
       {Array.isArray(word.similar_words) && word.similar_words.length > 0 ? (
         <Surface style={styles.card}>
           <Text style={styles.sectionTitle}>易混词 / 相似词</Text>

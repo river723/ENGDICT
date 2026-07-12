@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { View, TouchableOpacity, FlatList, ScrollView } from 'react-native';
+import { View, TouchableOpacity, FlatList } from 'react-native';
 import {
   Card,
   Text,
@@ -17,6 +17,8 @@ import { useAppTheme } from '../theme/theme';
 import { difficultyColor } from '../theme/tokens';
 import StorageService from '../services/StorageService';
 import SortPicker, { SortOption } from '../components/SortPicker';
+import FilterPicker, { FilterOption } from '../components/FilterPicker';
+import { usePersistedFilters } from '../hooks/usePersistedFilters';
 import { Word } from '../types';
 
 type SortMode = 'recent' | 'alpha' | 'diffAsc' | 'diffDesc' | 'freqAsc' | 'freqDesc';
@@ -30,8 +32,14 @@ const SORT_OPTIONS: SortOption<SortMode>[] = [
   { value: 'freqDesc', label: '考频↓' },
 ];
 
-const DIFFICULTY_LEVELS = [1, 2, 3, 4, 5] as const;
-const FREQUENCY_LEVELS = [1, 2, 3, 4, 5] as const;
+const DIFFICULTY_OPTIONS: FilterOption[] = [1, 2, 3, 4, 5].map((n) => ({
+  value: n,
+  label: `${n}★`,
+}));
+const FREQUENCY_OPTIONS: FilterOption[] = [1, 2, 3, 4, 5].map((n) => ({
+  value: n,
+  label: `${n}■`,
+}));
 
 export default function WordListScreen() {
   const navigation = useAppNavigation();
@@ -40,9 +48,12 @@ export default function WordListScreen() {
   const [words, setWords] = useState<Word[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
-  const [diffFilter, setDiffFilter] = useState<number | null>(null);
-  const [freqFilter, setFreqFilter] = useState<number | null>(null);
-  const [sortMode, setSortMode] = useState<SortMode>('recent');
+  const [filters, setFilters] = usePersistedFilters('WordList', {
+    sortMode: 'recent' as SortMode,
+    diffFilter: null as number | null,
+    freqFilter: null as number | null,
+  });
+  const { sortMode, diffFilter, freqFilter } = filters;
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [wordToDelete, setWordToDelete] = useState<Word | null>(null);
 
@@ -180,6 +191,13 @@ export default function WordListScreen() {
           </Text>
         )}
 
+        {/* 记忆技巧预览 */}
+        {item.memoryTip && (
+          <Text style={styles.memoryTip} numberOfLines={1}>
+            💡 {item.memoryTip}
+          </Text>
+        )}
+
         <View style={styles.wordActions}>
           <TouchableOpacity
             style={styles.actionBtn}
@@ -219,59 +237,21 @@ export default function WordListScreen() {
         />
       </Card>
 
-      {/* 筛选与排序 */}
+      {/* 筛选与排序（下拉式，合并为一行） */}
       <View style={styles.filterRow}>
-        <SortPicker options={SORT_OPTIONS} value={sortMode} onChange={setSortMode} />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScrollView} contentContainerStyle={styles.filterScroll}>
-          <Text style={styles.filterLabel}>难度</Text>
-          <Chip
-            selected={diffFilter === null}
-            showSelectedCheck={false}
-            onPress={() => setDiffFilter(null)}
-            mode="outlined"
-            compact
-            style={styles.filterChip}
-          >
-            全部
-          </Chip>
-          {DIFFICULTY_LEVELS.map(level => (
-            <Chip
-              key={level}
-              selected={diffFilter === level}
-              showSelectedCheck={false}
-              onPress={() => setDiffFilter(level)}
-              mode="outlined"
-              compact
-              style={styles.filterChip}
-            >
-              {level}★
-            </Chip>
-          ))}
-          <Text style={styles.filterLabel}>考频</Text>
-          <Chip
-            selected={freqFilter === null}
-            showSelectedCheck={false}
-            onPress={() => setFreqFilter(null)}
-            mode="outlined"
-            compact
-            style={styles.filterChip}
-          >
-            全部
-          </Chip>
-          {FREQUENCY_LEVELS.map(level => (
-            <Chip
-              key={level}
-              selected={freqFilter === level}
-              showSelectedCheck={false}
-              onPress={() => setFreqFilter(level)}
-              mode="outlined"
-              compact
-              style={styles.filterChip}
-            >
-              {level}■
-            </Chip>
-          ))}
-        </ScrollView>
+        <SortPicker options={SORT_OPTIONS} value={sortMode} onChange={(v) => setFilters({ sortMode: v })} />
+        <FilterPicker
+          label="难度"
+          options={DIFFICULTY_OPTIONS}
+          value={diffFilter}
+          onChange={(v) => setFilters({ diffFilter: v })}
+        />
+        <FilterPicker
+          label="考频"
+          options={FREQUENCY_OPTIONS}
+          value={freqFilter}
+          onChange={(v) => setFilters({ freqFilter: v })}
+        />
       </View>
 
       {/* 单词列表 */}
@@ -380,24 +360,9 @@ const useStyles = makeStyles(colors => ({
     marginBottom: 4,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingLeft: 16,
-  },
-  filterScrollView: {
-    flex: 1,
-  },
-  filterScroll: {
-    paddingRight: 16,
-    paddingVertical: 4,
+    flexWrap: 'wrap',
+    paddingHorizontal: 16,
     gap: 6,
-    alignItems: 'center',
-  },
-  filterLabel: {
-    fontSize: 12,
-    color: colors.tertiary,
-    marginHorizontal: 4,
-  },
-  filterChip: {
-    height: 28,
   },
   wordList: {
     flex: 1,
@@ -451,6 +416,11 @@ const useStyles = makeStyles(colors => ({
     height: 26,
   },
   etymology: {
+    fontSize: 12,
+    color: colors.onSurfaceVariant,
+    marginBottom: 8,
+  },
+  memoryTip: {
     fontSize: 12,
     color: colors.onSurfaceVariant,
     marginBottom: 8,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, ScrollView, TextInput, Platform } from 'react-native';
+import { View, ScrollView, Platform, Modal } from 'react-native';
 import {
   Card,
   Text,
@@ -8,7 +8,7 @@ import {
   Surface,
   Chip,
   SegmentedButtons,
-  Modal,
+  TextInput,
 } from 'react-native-paper';
 import { useAppNavigation, useAppRoute } from '../navigation/types';
 import StorageService from '../services/StorageService';
@@ -422,7 +422,7 @@ export default function StudyScreen() {
 
     return (
       <View style={styles.modeContainer}>
-        <Card style={styles.wordCard}>
+        <Card style={styles.wordCard} onPress={() => setIsFlipped(!isFlipped)}>
           <Card.Content style={styles.cardContent}>
             {!isFlipped ? (
               <View style={styles.cardFront}>
@@ -475,6 +475,14 @@ export default function StudyScreen() {
                   <Surface style={styles.etymologyBox}>
                     <Text style={styles.etymologyTitle}>🔍 词根词缀</Text>
                     <Text style={styles.etymologyText}>{currentWord.etymology}</Text>
+                  </Surface>
+                )}
+
+                {/* 记忆技巧 */}
+                {currentWord.memoryTip && (
+                  <Surface style={styles.memoryTipBox}>
+                    <Text style={styles.memoryTipTitle}>💡 记忆技巧</Text>
+                    <Text style={styles.memoryTipText}>{currentWord.memoryTip}</Text>
                   </Surface>
                 )}
 
@@ -857,8 +865,9 @@ export default function StudyScreen() {
               <Button
                 mode="contained"
                 onPress={() => {
+                  // 先关闭 Modal 再返回，避免遮罩层在页面卸载时残留拦截点击
                   setShowExitConfirm(false);
-                  navigation.goBack();
+                  requestAnimationFrame(() => navigation.goBack());
                 }}
                 buttonColor={colors.danger}
               >
@@ -962,6 +971,24 @@ const useStyles = makeStyles(colors => ({
     marginBottom: 4,
   },
   etymologyText: {
+    fontSize: 13,
+    color: colors.onSurfaceVariant,
+    lineHeight: 18,
+  },
+  memoryTipBox: {
+    padding: 10,
+    marginBottom: 12,
+    borderRadius: 8,
+    elevation: 1,
+    backgroundColor: colors.primaryContainer,
+  },
+  memoryTipTitle: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors.primary,
+    marginBottom: 4,
+  },
+  memoryTipText: {
     fontSize: 13,
     color: colors.onSurfaceVariant,
     lineHeight: 18,

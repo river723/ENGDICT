@@ -6,6 +6,7 @@ export interface Word {
   definitions: WordDefinition[];
   etymology?: string;
   similar_words?: SimilarWord[];
+  memoryTip?: string; // 记忆技巧（谐音、联想等）
   difficulty: number; // 1-5
   frequency: number; // 考研频次
   created_at?: string;
@@ -78,6 +79,7 @@ export interface WordDictEntry {
   definitions: WordDefinition[];
   etymology?: string;
   similar_words?: SimilarWord[];
+  memoryTip?: string;           // 记忆技巧（谐音、联想等）
   suggestedDifficulty?: number; // 本地词典建议难度 1-5
   examFrequency?: number;       // 考试考频 1-5（5 最高）
 }

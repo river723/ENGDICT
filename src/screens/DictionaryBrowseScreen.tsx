@@ -8,17 +8,17 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   View,
-  StyleSheet,
   FlatList,
   Platform,
   TouchableOpacity,
   SafeAreaView,
-  ScrollView,
 } from 'react-native';
-import { Card, Text, TextInput, Chip } from 'react-native-paper';
+import { Card, Text, TextInput } from 'react-native-paper';
 import { useAppNavigation, useAppRoute } from '../navigation/types';
 import { getLocalWordDictWords, seededShuffle } from '../utils/wordUtils';
 import SortPicker, { SortOption } from '../components/SortPicker';
+import FilterPicker, { FilterOption } from '../components/FilterPicker';
+import { usePersistedFilters } from '../hooks/usePersistedFilters';
 import { Word } from '../types';
 import { getDictionaryById } from '../data/dictionaries';
 import { makeStyles } from '../utils/useStyles';
@@ -39,8 +39,14 @@ const SORT_OPTIONS: SortOption<SortMode>[] = [
 
 const ROW_HEIGHT = 64;
 
-const DIFFICULTY_LEVELS = [1, 2, 3, 4, 5] as const;
-const FREQUENCY_LEVELS = [1, 2, 3, 4, 5] as const;
+const DIFFICULTY_OPTIONS: FilterOption[] = [1, 2, 3, 4, 5].map((n) => ({
+  value: n,
+  label: `${n}★`,
+}));
+const FREQUENCY_OPTIONS: FilterOption[] = [1, 2, 3, 4, 5].map((n) => ({
+  value: n,
+  label: `${n}■`,
+}));
 
 // -----------------------------------------------------------------------
 // 子级行组件（React.memo 隔离渲染）
@@ -136,18 +142,21 @@ export default function DictionaryBrowseScreen() {
 
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
-  const [sortMode, setSortMode] = useState<SortMode>('alpha');
   const [shuffleSeed, setShuffleSeed] = useState(1);
-  const [diffFilter, setDiffFilter] = useState<number | null>(null);
-  const [freqFilter, setFreqFilter] = useState<number | null>(null);
+  const [filters, setFilters] = usePersistedFilters('DictionaryBrowse', {
+    sortMode: 'alpha' as SortMode,
+    diffFilter: null as number | null,
+    freqFilter: null as number | null,
+  });
+  const { sortMode, diffFilter, freqFilter } = filters;
 
   // 选排序：点“乱序”时刷新 seed（再点一次也重洗），其余模式照常
   const changeSort = useCallback((mode: SortMode) => {
     if (mode === 'shuffle') {
       setShuffleSeed((s) => s + 1);
     }
-    setSortMode(mode);
-  }, []);
+    setFilters({ sortMode: mode });
+  }, [setFilters]);
 
   // 搜索防抖
   useEffect(() => {
@@ -263,63 +272,21 @@ export default function DictionaryBrowseScreen() {
         />
       </Card>
 
-      {/* 排序 */}
+      {/* 排序 + 难度 / 考频筛选（下拉式，合并为一行） */}
       <View style={styles.chipRow}>
         <SortPicker options={SORT_OPTIONS} value={sortMode} onChange={changeSort} />
-      </View>
-
-      {/* 难度 / 考频筛选 */}
-      <View style={styles.filterRow}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
-          <Text style={styles.filterLabel}>难度</Text>
-          <Chip
-            selected={diffFilter === null}
-            showSelectedCheck={false}
-            onPress={() => setDiffFilter(null)}
-            mode="outlined"
-            compact
-            style={styles.filterChip}
-          >
-            全部
-          </Chip>
-          {DIFFICULTY_LEVELS.map(level => (
-            <Chip
-              key={level}
-              selected={diffFilter === level}
-              showSelectedCheck={false}
-              onPress={() => setDiffFilter(level)}
-              mode="outlined"
-              compact
-              style={styles.filterChip}
-            >
-              {level}★
-            </Chip>
-          ))}
-          <Text style={styles.filterLabel}>考频</Text>
-          <Chip
-            selected={freqFilter === null}
-            showSelectedCheck={false}
-            onPress={() => setFreqFilter(null)}
-            mode="outlined"
-            compact
-            style={styles.filterChip}
-          >
-            全部
-          </Chip>
-          {FREQUENCY_LEVELS.map(level => (
-            <Chip
-              key={level}
-              selected={freqFilter === level}
-              showSelectedCheck={false}
-              onPress={() => setFreqFilter(level)}
-              mode="outlined"
-              compact
-              style={styles.filterChip}
-            >
-              {level}■
-            </Chip>
-          ))}
-        </ScrollView>
+        <FilterPicker
+          label="难度"
+          options={DIFFICULTY_OPTIONS}
+          value={diffFilter}
+          onChange={(v) => setFilters({ diffFilter: v })}
+        />
+        <FilterPicker
+          label="考频"
+          options={FREQUENCY_OPTIONS}
+          value={freqFilter}
+          onChange={(v) => setFilters({ freqFilter: v })}
+        />
       </View>
 
       {/* 单词列表 */}
@@ -375,33 +342,14 @@ const useStyles = makeStyles((colors) => ({
     fontSize: 15,
   },
 
-  // 排序行
+  // 排序 + 筛选行
   chipRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     paddingHorizontal: 12,
     paddingBottom: 6,
     gap: 6,
-  },
-
-  // 难度 / 考频筛选行
-  filterRow: {
-    paddingLeft: 12,
-    paddingBottom: 6,
-  },
-  filterScroll: {
-    paddingRight: 12,
-    paddingVertical: 4,
-    gap: 6,
-    alignItems: 'center',
-  },
-  filterLabel: {
-    fontSize: 12,
-    color: colors.tertiary,
-    marginHorizontal: 4,
-  },
-  filterChip: {
-    height: 28,
   },
 
   list: {

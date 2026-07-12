@@ -4,10 +4,10 @@
     "slug": "kaoyan-english-vocabulary",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/EngDict.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/EngDict.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -23,7 +23,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/EngDict.png",
         "backgroundColor": "#ffffff"
       },
       "package": "com.kaoyan.vocabulary"
@@ -37,6 +37,9 @@
         "projectId": "df15d00c-a6ad-4210-bbe5-583b7e294a9e"
       }
     },
-    "owner": "river723"
+    "owner": "river723",
+    "plugins": [
+      "expo-sharing"
+    ]
   }
 }

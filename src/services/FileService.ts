@@ -7,6 +7,10 @@ import { Platform } from 'react-native';
 
 export type ExportFileResult = 'shared' | 'downloaded';
 
+// 原生环境没有 window / electronAPI，安全获取避免 ReferenceError
+const getElectronAPI = () =>
+  (typeof window !== 'undefined' ? window.electronAPI : undefined);
+
 class FileService {
   generateBackupFileName(): string {
     return `memo-grad-backup-${format(new Date(), 'yyyyMMdd-HHmm')}.bk`;
@@ -16,8 +20,9 @@ class FileService {
     const compressed = gzipSync(strToU8(jsonContent));
 
     // Electron 桌面端：走原生保存对话框
-    if (window.electronAPI?.isAvailable()) {
-      const result = await window.electronAPI.saveBackup(compressed, fileName);
+    const electronAPI = getElectronAPI();
+    if (electronAPI?.isAvailable()) {
+      const result = await electronAPI.saveBackup(compressed, fileName);
       if (result.canceled) {
         throw new Error('EXPORT_CANCELED');
       }
@@ -52,8 +57,9 @@ class FileService {
 
   async pickAndReadBackupFile(): Promise<string | null> {
     // Electron 桌面端：走原生打开对话框
-    if (window.electronAPI?.isAvailable()) {
-      const result = await window.electronAPI.openBackup();
+    const electronAPI = getElectronAPI();
+    if (electronAPI?.isAvailable()) {
+      const result = await electronAPI.openBackup();
       if (result.canceled) {
         return null;
       }

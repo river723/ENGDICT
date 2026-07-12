@@ -24,6 +24,7 @@ export function wordDictEntryToWord(
     definitions: entry.definitions,
     etymology: entry.etymology,
     similar_words: Array.isArray(entry.similar_words) ? entry.similar_words : [],
+    memoryTip: entry.memoryTip,
     difficulty: clampDifficulty(entry.suggestedDifficulty),
     frequency: clampDifficulty(entry.examFrequency),
   };

@@ -186,3 +186,6 @@ temp/
 
 # Large asset files (exceed GitHub 100MB limit)
 assets/east6500.pdf
+
+# Android platform-tools (third-party binaries, download from Google when needed)
+tools/platform-tools/

@@ -207,6 +207,7 @@ export default function AddWordScreen() {
         definitions: converted.definitions,
         etymology: converted.etymology,
         similar_words: converted.similar_words || [],
+        memoryTip: converted.memoryTip,
         difficulty: converted.difficulty,
         ...(pronunciation
           ? { pronunciation_uk: pronunciation, pronunciation_us: pronunciation }
@@ -286,6 +287,7 @@ export default function AddWordScreen() {
             definitions: converted.definitions,
             etymology: converted.etymology || '',
             similar_words: converted.similar_words || [],
+            memoryTip: converted.memoryTip,
             difficulty,
             frequency: 1
           };

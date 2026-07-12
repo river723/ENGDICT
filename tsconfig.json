@@ -2,7 +2,8 @@
   "compilerOptions": {
     "ignoreDeprecations": "6.0",
     "forceConsistentCasingInFileNames": true,
-    "strict": true
+    "strict": true,
+    "jsx": "react-native"
   },
   "extends": "expo/tsconfig.base"
 }
