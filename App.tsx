@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, useColorScheme } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Provider as PaperProvider, Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AppNavigator from './src/navigation/AppNavigator';
@@ -92,9 +93,11 @@ export default function App() {
 
   try {
     return (
-      <ThemeProvider>
-        <AppNavigator />
-      </ThemeProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <ThemeProvider>
+          <AppNavigator />
+        </ThemeProvider>
+      </GestureHandlerRootView>
     );
   } catch (err) {
     console.error('App 渲染错误:', err);
