@@ -15,7 +15,14 @@
       "Bash(git fetch *)",
       "Bash(git ls-tree *)",
       "Bash(git merge *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(npx expo *)",
+      "Bash(npx electron-builder *)",
+      "Bash(rm -rf dist-electron/.icon-ico)",
+      "Bash(node -e \"const d=require\\('./src/data/worddict.json'\\); console.log\\('词条数:', Object.keys\\(d.results\\).length\\)\")",
+      "Bash(python -c \"import docx; print\\('python-docx OK'\\)\")",
+      "Bash(pip install *)",
+      "Bash(python -c \"from docx import Document; d=Document\\('考研英语生词本-产品功能与变现方案.docx'\\); print\\('段落数:', len\\(d.paragraphs\\)\\); print\\('表格数:', len\\(d.tables\\)\\)\")"
     ]
   }
 }

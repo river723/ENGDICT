@@ -90,7 +90,14 @@ export default function AppNavigator() {
       theme={dark ? darkNavTheme : lightNavTheme}
       documentTitle={{ formatter: () => '考研英语生词本' }}
     >
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+          // Web/Electron 下 @react-navigation/stack 的卡片默认不撑满视口高度，
+          // 导致屏内 FlatList 拿不到有界高度而无法滚动。强制 flex:1 修复。
+          cardStyle: { flex: 1 },
+        }}
+      >
         <Stack.Screen name="Main" component={MainTabs} />
         <Stack.Screen
           name="AddWord"

@@ -11,7 +11,6 @@ import {
   FlatList,
   Platform,
   TouchableOpacity,
-  SafeAreaView,
 } from 'react-native';
 import { Card, Text, TextInput } from 'react-native-paper';
 import { useAppNavigation, useAppRoute } from '../navigation/types';
@@ -247,7 +246,7 @@ export default function DictionaryBrowseScreen() {
   const isSearching = debouncedQuery.trim().length > 0;
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <View style={styles.screen}>
       {/* 状态栏 */}
       <View style={styles.statusBar}>
         <Text style={styles.statusText}>
@@ -307,7 +306,7 @@ export default function DictionaryBrowseScreen() {
           </View>
         }
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
